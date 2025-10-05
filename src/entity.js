@@ -96,7 +96,7 @@ export class Entity {
     }
   }
 
-  addEntity(entity, token) {
+  addEntity(entity, token, { updatePaths = true } = {}) {
     if (this.type == "leaf") {
       throw new TypeError("Cannot add Entity to leaf Entity");
     }
@@ -132,7 +132,9 @@ export class Entity {
       entity.parent = this;
       entity.token = token;
 
-      entity.updatePaths();
+      if (updatePaths) {
+        entity.updatePaths();
+      }
     }
     else {
       if (typeof entity != "object") {
