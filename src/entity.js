@@ -3,10 +3,18 @@ import { EntityPath } from "./entity-path.js";
 export class Entity {
   constructor(config = {}, { parent, token } = {}) {
     // Element
-    this.domElement = config.domElement || config.domEl;
+    this.domElement = config.domElement || config.domEl || null;
+    if (
+      this.domElement !== null && this.domElement !== undefined &&
+      !(this.domElement instanceof Element)
+    ) throw new TypeError("Cannot initialize Entity: domElement property is not an Element");
 
     // Attributes
     this.attributes = config.attributes || config.attrs || null;
+    if (
+      this.attributes !== null && this.attributes !== undefined &&
+      typeof this.attributes !== "object"
+    ) throw new TypeError("Cannot initialize Entity: attributes property is not an object");
 
     // Temp state
     this.state = config.state || config.st || null;
@@ -15,25 +23,44 @@ export class Entity {
     this.lState = config.localState || config.lState || null;
 
     // Validators
-    const valid = config.validators || config.valid;
+    const validators = config.validators || config.valid;
     this.validators = {};
-    if (valid) {
-      for (const [name, func] of Object.entries(valid)) {
+    if (validators) {
+      if (typeof validators !== "object") {
+        throw new TypeError("Cannot initialize Entity: validators property is not an object");
+      }
+
+      for (const [name, func] of Object.entries(validators)) {
+        if (typeof func !== "function") {
+          throw new TypeError(`Cannot initialize Entity: validator "${name}" is not a function`);
+        }
+
         this.validators[name] = func.bind(this);
       }
     }
 
     // Utilities
-    this.utils = null;
+    this.utils = {};
     if (config.utils) {
-      this.utils = {};
-      for (const [name, func] of config.utils) {
+      if (typeof config.utils !== "object") {
+        throw new TypeError("Cannot initialize Entity: utils property is not an object");
+      }
+
+      for (const [name, func] of Object.entries(config.utils)) {
+        if (typeof func !== "function") {
+          throw new TypeError(`Cannot initialize Entity: utility "${name}" is not a function`);
+        }
+
         this.utils[name] = func.bind(this);
       }
     }
 
     // Event listeners
     if (config.events && this.domElement) {
+      if (typeof config.events !== "object") {
+        throw new TypeError("Cannot initialize Entity: events property is not an object");
+      }
+
       for (const [event, handler, options] of Object.entries(config.events)) {
         this.domElement.addEventListener(event, handler.bind(this), options);
       }
