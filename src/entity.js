@@ -73,20 +73,20 @@ export class Entity {
     // Add children
     if (this.type == "group") {
       for (const [key, ent] of Object.entries(children)) {
-        this.addEntity(ent, key, { updatePaths: false });
+        this.addEntity(ent, key, { updateHierarchy: false });
       }
     }
 
     if (this.type == "list") {
       children.forEach((ent, index) => {
-        this.addEntity(ent, index, { updatePaths: false });
+        this.addEntity(ent, index, { updateHierarchy: false });
       });
     }
 
     // Once entities have been added, check if this Entity is top-level.
     // If so, initialize its path and those of its descendants.
     if (!this.parent) {
-      this.updatePaths();
+      this._updateHierarchy();
     }
 
 
@@ -96,7 +96,8 @@ export class Entity {
     }
   }
 
-  addEntity(entity, token, { updatePaths = true } = {}) {
+  // entObj can be either a config object or an Entity instance
+  addEntity(entObj, token, { updateHierarchy = true } = {}) {
     if (this.type == "leaf") {
       throw new TypeError("Cannot add Entity to leaf Entity");
     }
@@ -122,8 +123,10 @@ export class Entity {
       }
     }
 
-    // Validate / branch based on entity parameter type
-    if (entity instanceof Entity) {
+    // Validation / initialization based on entity parameter type
+    var entity;
+    if (entObj instanceof Entity) {
+      entity = entObj;
       if (entity.parent) {
         throw new Error(`Cannot add entity to ${this.type} "${this.path.toString()}": Entity already has a parent`);
       }
@@ -131,21 +134,21 @@ export class Entity {
       // Set this Entity's parent and token props
       entity.parent = this;
       entity.token = token;
-
-      if (updatePaths) {
-        entity.updatePaths();
-      }
     }
     else {
-      if (typeof entity != "object") {
+      if (typeof entObj != "object") {
         throw new TypeError(`Cannot add Entity to ${this.type} "${this.path.toString()}": Entity to add is not an object or Entity`);
       }
 
       // If the entity is a config object, initialize it,
       // passing self and the new token to give context for initializing paths later
-      entity = new Entity(entity, {parent: this, token: token});
+      entity = new Entity(entObj, { parent: this, token: token });
     }
 
+    // Recursively update hierarchy if called for
+    if (updateHierarchy) {
+      entity._updateHierarchy();
+    }
 
     // Add the entity to the children array / object
     if (this.type == "group") {
@@ -154,17 +157,20 @@ export class Entity {
     if (this.type == "list") {
       this.children.splice(token, 0, entity);
     }
+
+    return entity;
   }
 
-  updatePaths() {
+  // Recursively updates paths for self and all descendants;
+  // For use internally and in other core classes
+  _updateHierarchy() {
     if (this.parent) {
       this.path = EntityPath.join(this.parent.path, this.token);
-      console.log(this.path.toString());
     }
 
     if (this.children) {
       this.forEachChild((c) => {
-        c.updatePaths();
+        c._updateHierarchy();
       });
     }
   }

@@ -1,78 +1,14 @@
-import { $ } from "../src/utils/dom.js";
-import { Entity } from "../src/entity.js";
-import { EntUI } from "../src/ent-ui.js";
-import { EntityPath } from "../src/entity-path.js";
+TODO:
+  * Fix token stringification (entUI.getEntity "Invalid token" errors)
+  * Allow EntUI initialization from config object
+  * Initialize UI state (by default or as predefined in standalone Entity)
+  * Add init options
+    * figure out order that init() calls should run
 
-var elements = [];
-for (let i = 1; i < 20; i++) {
-  elements.push($(`#e${i}`));
-}
 
-var group12 = new Entity({
-  children: {
-    one: {
-      domEl: elements[0]
-    },
-    two: {
-      domEl: elements[1]
-    },
-  }
-});
+--------------------------------------------------------------
 
-group12.addEntity(
-  {
-    domEl: elements[2],
-    children: {
-      eight: new Entity({
-        children: [
-          {
-            domEl: elements[8]
-          },
-          {
-            domEl: elements[9],
-            children: [
-              { domEl: elements[10] },
-              {
-                domEl: elements[11],
-                children: {
-                  thireteen: new Entity({ domEl: elements[12] }),
-                  fourteen: { domEl: elements[13] },
-                }
-              }
-            ]
-          }
-        ]
-      })
-    }
-  },
-  "three"
-);
-
-var list45 = new Entity({
-  children: [
-    {
-      domEl: elements[3],
-      children: {
-        six: {
-          domEl: elements[5],
-        },
-
-        seven: {
-          domEl: elements[6],
-        }
-      }
-    },
-    
-    {
-      domEl: elements[4],
-    }
-  ]
-});
-
-list45.addEntity(group12, 0);
-console.log(list45);
-
-/**
+Cluttered and chaotic planning / theory:
 
 Initialization of path props:
 
@@ -90,7 +26,6 @@ run updatePaths ONLY IF THIS ENTITY HAS NO PARENT. This way, we are guaranteed t
 
 
 
----------------------------------------------------------------------------------
 Target API calls
 this.ui.credsGroup.els.username.domEl.style.display = "none"
 this.ui.domEl("credsGroup", "username").style.display = "none"
@@ -107,6 +42,7 @@ will use tokenizer to return the list of attributes/indices, e.g.:
 ["listOfLists", "taskLists", "0", "tasks", 2, "deleteButton"]
 Groups access via attribute strings
 Lists access via indices
+For "traversal" syntax, can use prefixes of parent symbol "^"
 
 KEY IDEA: Define access paths for elements and lists. When elements are created
 as part of a group/list/UI, they are initialized with the path of tokens leading to themselves. This will help shorten the long routes up to the UI parent and back
@@ -129,15 +65,4 @@ this.ui.setState("listOfLists.taskLists.0.tasks.2", "3rd task of 1st list") // s
 this.ui.setState("listOfLists.taskLists[0].tasks[2]", "3rd task of 1st list") // single access parameter with bracket notation
 
 this.ui.attr("taskList", 0)
-
-this.ui.valid("rememberMe") // Single validator
-this.ui.valid("rememberMe", "isChecked") // Validator object
-
-this.ui.domEl("credsGroup", "username") // group
-this.ui.domEl("rememberMe", "checkbox") // group
-
-this.ui.domEl("taskList", 0) // list
 ---------------------------------------------------------------------------------
-
-
-*/
