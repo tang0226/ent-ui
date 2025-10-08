@@ -118,8 +118,9 @@ export class Entity {
 
 
     // Custom initialization
-    if (config.init) {
-      this.init.bind(this)();
+    if (config.init && typeof config.init === "function") {
+      this.init = config.init.bind(this);
+      this.init();
     }
   }
 

@@ -77,4 +77,68 @@ var ui = new EntUI();
 ui.addEntity(group12, "group12");
 ui.addEntity(list45, "list45");
 
+console.log("Nesting test:");
 console.log(ui);
+
+console.log("init() order test:");
+
+console.log("target order: three, four, one, five, seven, eight, six, two");
+
+var nested = new Entity({
+  children: {
+    one: {
+      children: {
+        three: {
+          domEl: elements[2],
+          init() {
+            console.log("three");
+          }
+        },
+        four: {
+          domEl: elements[3],
+          init() {
+            console.log("four");
+          }
+        }
+      },
+      init() {
+        console.log("one");
+      }
+    },
+    two: {
+      children: [
+        {
+          domEl: elements[4],
+          init() {
+            console.log("five");
+          },
+        },
+        {
+          domEl: elements[5],
+          children: [
+            {
+              domEl: elements[6],
+              init() {
+                console.log("seven");
+              }
+            },
+            {
+              domEl: elements[7],
+              init() {
+                console.log("eight");
+              }
+            }
+          ],
+          init() {
+            console.log("six");
+          }
+        }
+      ],
+      init() {
+        console.log("two");
+      }
+    }
+
+  }
+});
+console.log("");
