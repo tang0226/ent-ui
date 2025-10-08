@@ -3,27 +3,27 @@ import { EntityPath } from "./entity-path.js";
 export class Entity {
   constructor(config = {}, { parent, token } = {}) {
     // Element
-    this.domElement = config.domElement || config.domEl || null;
+    this.domEl = config.domEl || null;
     if (
-      this.domElement !== null && this.domElement !== undefined &&
-      !(this.domElement instanceof Element)
+      this.domEl !== null && this.domEl !== undefined &&
+      !(this.domEl instanceof Element)
     ) throw new TypeError("Cannot initialize Entity: domElement property is not an Element");
 
     // Attributes
-    this.attributes = config.attributes || config.attrs || null;
+    this.attrs = config.attrs || null;
     if (
-      this.attributes !== null && this.attributes !== undefined &&
-      typeof this.attributes !== "object"
+      this.attrs !== null && this.attrs !== undefined &&
+      typeof this.attrs !== "object"
     ) throw new TypeError("Cannot initialize Entity: attributes property is not an object");
 
     // Temp state
-    this.state = config.state || config.st || null;
+    this.state = config.state || null;
 
     // Local state
-    this.lState = config.localState || config.lState || null;
+    this.lState = config.lState || null;
 
     // Validators
-    const validators = config.validators || config.valid;
+    const validators = config.validators;
     this.validators = {};
     if (validators) {
       if (typeof validators !== "object") {
@@ -56,13 +56,13 @@ export class Entity {
     }
 
     // Event listeners
-    if (config.events && this.domElement) {
+    if (config.events && this.domEl) {
       if (typeof config.events !== "object") {
         throw new TypeError("Cannot initialize Entity: events property is not an object");
       }
 
       for (const [event, handler, options] of Object.entries(config.events)) {
-        this.domElement.addEventListener(event, handler.bind(this), options);
+        this.domEl.addEventListener(event, handler.bind(this), options);
       }
     }
 
@@ -92,7 +92,7 @@ export class Entity {
     
     // If the Entity is a leaf, ensure it has a DOM element
     if (this.type == "leaf") {
-      if (!this.domElement) {
+      if (!this.domEl) {
         throw new Error("Leaf entity must have an associated DOM element");
       }
     }

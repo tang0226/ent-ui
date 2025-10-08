@@ -40,7 +40,6 @@ export class EntUI {
       if (!entity.children) {
         throw new Error(`Entity "${entity.path.toString()}" has no children`);
       }
-
       // Check for mismatching token types
       if (entity.type == "group" && typeof token != "string") {
         throw new TypeError(`Invalid token: accessing Entities of group "${entity.path.toString()}" requires a string; {${token}} provided instead`);
@@ -48,6 +47,7 @@ export class EntUI {
       if (entity.type == "list" && typeof token != "number") {
         throw new TypeError(`Invalid token: accessing Entities of list "${entity.path.toString()}" requires a number; {${token}} provided instead`);
       }
+
 
       let nextEntity = entity.children[token];
       if (!nextEntity) {
@@ -78,7 +78,6 @@ export class EntUI {
     if (path.tokens.length == 0) {
       throw new ValueError(`Cannot add Entity to UI: empty path`);
     }
-
     if (typeof path.tokens[0] != "string") {
       throw new TypeError(`Cannot add Entity to UI: first path token {${path.tokens[0]}} is not a string`);
     }
@@ -87,6 +86,8 @@ export class EntUI {
     let entity;
     if (entObj instanceof Entity) {
       entity = entObj;
+
+      
       if (entity.ui) {
         throw new Error(`Cannot add entity to UI at path "${path.toString()}": Entity is already attached to a UI`);
       }
