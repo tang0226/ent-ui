@@ -11,53 +11,6 @@ export class EntUI {
     // Init with options here
   }
 
-  getEntity(path) {
-    let tokens = path;
-
-    // Initialize tokens and validate path type
-    if (path instanceof EntityPath) {
-      tokens = EntityPath.tokens;
-    }
-    else if (typeof path == "string") {
-      tokens = EntityPath.tokenize(path);
-    }
-    else if (!Array.isArray(path)) {
-      throw new TypeError("Path variable must be an EntityPath, a string, or an array of tokens");
-    }
-
-    // Validate first token
-    if (typeof tokens[0] != "string") {
-      throw new TypeError("First path token must be a property name");
-    }
-
-
-    let entity = this.entities[tokens[0]];
-    if (!entity) {
-      throw new Error(`UI has no top-level entity "${tokens[0]}"`);
-    }
-
-    for (let token of tokens.slice(1)) {
-      if (!entity.children) {
-        throw new Error(`Entity "${entity.path.toString()}" has no children`);
-      }
-      // Check for mismatching token types
-      if (entity.type == "group" && typeof token != "string") {
-        throw new TypeError(`Invalid token: accessing Entities of group "${entity.path.toString()}" requires a string; {${token}} provided instead`);
-      }
-      if (entity.type == "list" && typeof token != "number") {
-        throw new TypeError(`Invalid token: accessing Entities of list "${entity.path.toString()}" requires a number; {${token}} provided instead`);
-      }
-
-
-      let nextEntity = entity.children[token];
-      if (!nextEntity) {
-        throw new Error(`Entity "${entity.path.toString()}" has no child {${token}}`);
-      }
-      entity = nextEntity;
-    }
-
-    return entity;
-  }
 
   // Can add a top-level Entity to the UI or a sub-Entity to an existing Entity, depending on `path`
   // entObj can be either a config object or an Entity instance
@@ -126,6 +79,53 @@ export class EntUI {
     this._extractEntityState(entity);
   }
 
+
+  getEntity(path) {
+    let tokens = path;
+
+    // Initialize tokens and validate path type
+    if (path instanceof EntityPath) {
+      tokens = EntityPath.tokens;
+    }
+    else if (typeof path == "string") {
+      tokens = EntityPath.tokenize(path);
+    }
+    else if (!Array.isArray(path)) {
+      throw new TypeError("Path variable must be an EntityPath, a string, or an array of tokens");
+    }
+
+    // Validate first token and initialize current entity var
+    if (typeof tokens[0] != "string") {
+      throw new TypeError("First path token must be a property name");
+    }
+    let entity = this.entities[tokens[0]];
+    if (!entity) {
+      throw new Error(`UI has no top-level entity "${tokens[0]}"`);
+    }
+
+    for (let token of tokens.slice(1)) {
+      if (!entity.children) {
+        throw new Error(`Entity "${entity.path.toString()}" has no children`);
+      }
+      // Check for mismatching token types
+      if (entity.type == "group" && typeof token != "string") {
+        throw new TypeError(`Invalid token: accessing Entities of group "${entity.path.toString()}" requires a string; {${token}} provided instead`);
+      }
+      if (entity.type == "list" && typeof token != "number") {
+        throw new TypeError(`Invalid token: accessing Entities of list "${entity.path.toString()}" requires a number; {${token}} provided instead`);
+      }
+
+      let nextEntity = entity.children[token];
+      if (!nextEntity) {
+        throw new Error(`Entity "${entity.path.toString()}" has no child {${token}}`);
+      }
+      entity = nextEntity;
+    }
+
+    return entity;
+  }
+
+
   // Recursively adds the `ui` prop to an entity and all its descendants
   _linkEntity(entity) {
     entity.ui = this;
@@ -135,6 +135,7 @@ export class EntUI {
       });
     }
   }
+
 
   // Recursively extract the temp-state from an entity and its descendants into the `state` prop.
   // When adding an Entity, this step must take place after hierarchy initialization (Entity._updateHierarchy())
@@ -174,7 +175,8 @@ export class EntUI {
     }
   }
 
-  // Returns the state object at a given (assumed valid) path
+
+  // Returns the state object (branch) at a given (assumed valid) path
   _getStateObj(path) {
     const tokens = path.tokens;
     var stateTree = this.state[tokens[0]];
@@ -183,6 +185,7 @@ export class EntUI {
     }
     return stateTree;
   }
+
 
   static createEntity(config) {
     return new Entity(config);

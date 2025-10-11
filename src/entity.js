@@ -123,7 +123,8 @@ export class Entity {
       this.init();
     }
   }
-
+  // END CONSTRUCTOR
+  // -----------------------------------------------------------
 
 
   // entObj can be either a config object or an Entity instance
@@ -190,20 +191,7 @@ export class Entity {
 
     return entity;
   }
-
-  // Recursively updates paths for self and all descendants;
-  // For use internally and in other core classes
-  _updateHierarchy() {
-    if (this.parent) {
-      this.path = EntityPath.join(this.parent.path, this.token);
-    }
-
-    if (this.children) {
-      this.forEachChild((c) => {
-        c._updateHierarchy();
-      });
-    }
-  }
+  
 
   forEachChild(func) {
     if (this.type == "group") {
@@ -219,5 +207,20 @@ export class Entity {
       return;
     }
     throw new TypeError(`Cannot call forEachChild on entity "${this.path.toString()}": not a group or list`);
+  }
+
+
+  // Recursively updates paths for self and all descendants;
+  // For use internally and in other core classes
+  _updateHierarchy() {
+    if (this.parent) {
+      this.path = EntityPath.join(this.parent.path, this.token);
+    }
+
+    if (this.children) {
+      this.forEachChild((c) => {
+        c._updateHierarchy();
+      });
+    }
   }
 }
