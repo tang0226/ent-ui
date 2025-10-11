@@ -1,7 +1,7 @@
 import { EntityPath } from "./entity-path.js";
 
 export class Entity {
-  constructor(config = {}, { _parent, _token } = {}) {
+  constructor(config = {}, { _parent = null, _token = null } = {}) {
     // Element
     this.domEl = config.domEl || null;
     if (
@@ -123,6 +123,8 @@ export class Entity {
       this.init();
     }
   }
+
+
 
   // entObj can be either a config object or an Entity instance
   addEntity(entObj, token, { updateHierarchy = true } = {}) {
