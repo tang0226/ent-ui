@@ -4,9 +4,9 @@ import { EntityPath } from "./entity-path.js";
 export class EntUI {
   constructor(options = {}) {
     this.entities = {};
-    this.state = this.st = {};
-    this.attributes = this.attrs = {};
-    this.validators = this.valid = {};
+    this.state = {};
+    this.attrs = {};
+    this.validators = {};
 
     // Init with options here
   }
@@ -111,27 +111,77 @@ export class EntUI {
       entity.path = new EntityPath([token]);
       entity._updateHierarchy();
 
-      this.linkEntity(entity);
-
       // Add to top-level entities object
       this.entities[token] = entity;
     }
     else {
-      this.linkEntity(entity);
-
       // Add entity to some descendant Entity (determined by path)
       this.getEntity(path).addEntity(entity);
     }
+
+    // Link the Entity to this UI
+    this._linkEntity(entity);
+
+    // Extract state from the Entity and its descendants
+    this._extractEntityState(entity);
   }
 
   // Recursively adds the `ui` prop to an entity and all its descendants
-  linkEntity(entity) {
+  _linkEntity(entity) {
     entity.ui = this;
     if (entity.children) {
       entity.forEachChild((c) => {
-        this.linkEntity(c);
+        this._linkEntity(c);
       });
     }
+  }
+
+  // Recursively extract the temp-state from an entity and its descendants into the `state` prop.
+  // When adding an Entity, this step must take place after hierarchy initialization (Entity._updateHierarchy())
+  _extractEntityState(entity, stateObj = null) {
+
+    // If entity is top-level, initialize the top-level object in `state`
+    if (!entity.parent) {
+      // Initialize top-level state and set stateObj as a reference
+      this.state[entity.token] = stateObj = {};
+    }
+    else {
+      // If not recursively passed, et the state object by
+      // traversing `state` based on entity's `path`
+      if (!stateObj) {
+        stateObj = this._getStateObj(entity.path);
+      }
+    }
+
+    stateObj.state = null;
+    if (entity.state) {
+      // Move the entity's state into stateObj
+      // (which refers to the correct location in `this.state`)
+      stateObj.state = entity.state;
+      entity.state = null;
+    }
+
+    if (entity.children) {
+      stateObj.children = entity.type == "list" ? [] : {};
+
+      entity.forEachChild((c, token) => {
+        stateObj.children[token] = {};
+        this._extractEntityState(
+          c,
+          stateObj.children[token]
+        );
+      });
+    }
+  }
+
+  // Returns the state object at a given (assumed valid) path
+  _getStateObj(path) {
+    const tokens = path.tokens;
+    var stateTree = this.state[tokens[0]];
+    for (let token of tokens.slice(1)) {
+      stateTree = stateTree.children[token];
+    }
+    return stateTree;
   }
 
   static createEntity(config) {
