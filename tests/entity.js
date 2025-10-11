@@ -141,4 +141,9 @@ var nested = new Entity({
 
   }
 });
+nested.children["one"].addEntity({
+  domEl: elements[8],
+}, "nine");
+
+console.log(nested);
 console.log("");

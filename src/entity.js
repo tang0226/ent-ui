@@ -1,7 +1,7 @@
 import { EntityPath } from "./entity-path.js";
 
 export class Entity {
-  constructor(config = {}, { parent, token } = {}) {
+  constructor(config = {}, { _parent, _token } = {}) {
     // Element
     this.domEl = config.domEl || null;
     if (
@@ -68,8 +68,8 @@ export class Entity {
 
     // Path properties
     this.path = new EntityPath();
-    this.parent = parent;
-    this.token = token;
+    this.parent = _parent;
+    this.token = _token;
 
 
     // Children
@@ -170,7 +170,7 @@ export class Entity {
 
       // If the entity is a config object, initialize it,
       // passing self and the new token to give context for initializing paths later
-      entity = new Entity(entObj, { parent: this, token: token });
+      entity = new Entity(entObj, { _parent: this, _token: token });
     }
 
     // Recursively update hierarchy if called for
