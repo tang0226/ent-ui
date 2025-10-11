@@ -100,13 +100,13 @@ export class Entity {
     // Add children
     if (this.type == "group") {
       for (const [key, ent] of Object.entries(children)) {
-        this.addEntity(ent, key, { updateHierarchy: false });
+        this.addEntity(ent, key, { _updateHierarchy: false });
       }
     }
 
     if (this.type == "list") {
       children.forEach((ent, index) => {
-        this.addEntity(ent, index, { updateHierarchy: false });
+        this.addEntity(ent, index, { _updateHierarchy: false });
       });
     }
 
@@ -127,7 +127,7 @@ export class Entity {
 
 
   // entObj can be either a config object or an Entity instance
-  addEntity(entObj, token, { updateHierarchy = true } = {}) {
+  addEntity(entObj, token, { _updateHierarchy = true } = {}) {
     if (this.type == "leaf") {
       throw new TypeError("Cannot add Entity to leaf Entity");
     }
@@ -176,7 +176,7 @@ export class Entity {
     }
 
     // Recursively update hierarchy if called for
-    if (updateHierarchy) {
+    if (_updateHierarchy) {
       entity._updateHierarchy();
     }
 
