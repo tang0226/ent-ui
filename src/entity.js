@@ -65,7 +65,7 @@ export class Entity {
       this.events = events;
 
       if (this.domEl) {
-        this._initEvents();
+        this._initEventListeners();
       }
     }
 
