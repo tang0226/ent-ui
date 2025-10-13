@@ -10,17 +10,17 @@ export class Entity {
     ) throw new TypeError("Cannot initialize Entity: domEl property is not a DOM element");
 
     // Attributes
-    this.attrs = config.attrs || null;
+    this.attrs = config.attrs || {};
     if (
       this.attrs !== null && this.attrs !== undefined &&
       typeof this.attrs !== "object"
     ) throw new TypeError("Cannot initialize Entity: attributes property is not an object");
 
     // Temp state
-    this.state = config.state || null;
+    this.state = config.state || {};
 
     // Local state
-    this.lState = config.lState || null;
+    this.lState = config.lState || {};
 
     // Validators
     const validators = config.validators;
@@ -56,7 +56,7 @@ export class Entity {
     }
 
     // Event listeners
-    const events = config.events || null;
+    const events = config.events || {};
     if (events && this.domEl) {
       if (typeof events !== "object") {
         throw new TypeError("Cannot initialize Entity: events property is not an object");
