@@ -3,6 +3,11 @@ import { isArrowFunction } from "./utils/validation.js";
 
 export class Entity {
   constructor(config = {}, { _parent = null, _token = null } = {}) {
+    // Path properties
+    this.path = new EntityPath();
+    this.parent = _parent;
+    this.token = _token;
+
     // Element
     this.domEl = config.domEl || null;
     if (
@@ -81,11 +86,6 @@ export class Entity {
         this._initEventListeners();
       }
     }
-
-    // Path properties
-    this.path = new EntityPath();
-    this.parent = _parent;
-    this.token = _token;
 
 
     // Children
@@ -236,11 +236,14 @@ export class Entity {
   // Attaches all events to DOM element if possible
   _initEventListeners() {
     if (this.domEl) {
-      for (const [event, handler, options] of Object.entries(this.events)) {
-        if (isArrowFunction(handler)) {
-          throw new Error(`Cannot initialize event listeners for Entity "${this.path.toString()}": ${event} event handler cannot be an arrow function`);
+      for (const [event, handler] of Object.entries(this.events)) {
+        if (typeof handler != "function") {
+          throw new Error(`Cannot initialize Entity "${this.path.toString()}": ${event} event handler must be a function`);
         }
-        this.domEl.addEventListener(event, handler.bind(this), options);
+        if (isArrowFunction(handler)) {
+          throw new Error(`Cannot initialize Entity "${this.path.toString()}": ${event} event handler cannot be an arrow function`);
+        }
+        this.domEl.addEventListener(event, handler.bind(this));
       }
     }
   }
