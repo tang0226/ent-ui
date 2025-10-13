@@ -31,7 +31,7 @@ export class TestSuite {
         this.passed++;
       }
       catch (error) {
-        console.error(`❌ ${test.name}:\n${error.message}`);
+        console.log(`❌ ${test.name}:\n${error.message}`);
         this.failed++;
       }
     }
