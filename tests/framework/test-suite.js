@@ -40,7 +40,7 @@ export class TestSuite {
       console.log(`✅ all tests (${this.passed}/${this.testCount}) passed`);
       return true;
     }
-    console.log(`❌ ${this.passed}/${this.testCount} tests passed`);
+    console.log(`⚠️ ${this.passed}/${this.testCount} tests passed; ${this.failed} failed`);
     return false;
   }
 }
