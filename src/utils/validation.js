@@ -14,9 +14,14 @@ function isValidProp(str) {
   return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(str);
 }
 
+function isArrowFunction(func) {
+  return /^\(.*?\).*?=>/.test(func.toString());
+}
+
 export {
   isValidPropChar,
   isValidPropFirstChar,
   isValidIndex,
   isValidProp,
+  isArrowFunction,
 };

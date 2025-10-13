@@ -1,4 +1,5 @@
 import { EntityPath } from "./entity-path.js";
+import { isArrowFunction } from "./utils/validation.js";
 
 export class Entity {
   constructor(config = {}, { _parent = null, _token = null } = {}) {
@@ -37,7 +38,7 @@ export class Entity {
 
         // Check if the function is an arrow (=>) function, which cannot be bound with
         // a specific `this` value
-        if (/^\(.*?\).*?=>/.test(func.toString())) {
+        if (isArrowFunction(func)) {
           throw new TypeError(`Cannot initialize Entity: validator "${name}" cannot be an arrow function`)
         }
 
@@ -59,7 +60,7 @@ export class Entity {
 
         // Check if the function is an arrow (=>) function, which cannot be bound with
         // a specific `this` value
-        if (/^\(.*?\).*?=>/.test(func.toString())) {
+        if (isArrowFunction(func)) {
           throw new TypeError(`Cannot initialize Entity: utility "${name}" cannot be an arrow function`)
         }
 
@@ -236,6 +237,9 @@ export class Entity {
   _initEventListeners() {
     if (this.domEl) {
       for (const [event, handler, options] of Object.entries(this.events)) {
+        if (isArrowFunction(handler)) {
+          throw new Error(`Cannot initialize event listeners for Entity "${this.path.toString()}": ${event} event handler cannot be an arrow function`);
+        }
         this.domEl.addEventListener(event, handler.bind(this), options);
       }
     }
