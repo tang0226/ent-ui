@@ -175,7 +175,7 @@ testSuite.addTest("Initialization fails with arrow function utils", () => {
   }, /utility.+cannot be an arrow function/);
 });
 
-testSuite.addTest("Event listeners initialize (Entity._initEventListeners)", () => {
+testSuite.addTest("_initEventListeners: Event listeners initialize", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
     events: {
@@ -194,6 +194,28 @@ testSuite.addTest("Initialization fails with non-object events", () => {
       events: "not-an-object",
     });
   }, "events property is not an object");
+});
+
+testSuite.addTest("_initEventListeners() fails with non-function handlers", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      domEl: document.createElement("div"),
+      events: {
+        click: "not-a-function",
+      },
+    });
+  }, "event handler must be a function");
+});
+
+testSuite.addTest("_initEventListeners() fails with arrow function handlers", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      domEl: document.createElement("div"),
+      events: {
+        click: (e) => {return e},
+      },
+    });
+  }, "event handler cannot be an arrow function");
 });
 
 testSuite.addTest("Event listeners operate", () => {
