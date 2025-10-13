@@ -32,7 +32,7 @@ testSuite.addTest("Initialization fails with non-DOM element", () => {
     var e = new Entity({
       domEl: [],
     });
-  });
+  }, "domEl property is not a DOM element");
 });
 
 testSuite.addTest("Attributes initialize", () => {
@@ -48,9 +48,7 @@ testSuite.addTest("Initialization fails with non-object attributes", () => {
     var e = new Entity({
       attrs: "not-an-object",
     });
-    assertEqual(e.attrs.a, 1);
-    assertEqual(e.attrs.b, 2);
-  });
+  }, "attributes property is not an object");
 });
 
 testSuite.addTest("State initializes", () => {
@@ -92,15 +90,22 @@ testSuite.addTest("Validators operate", () => {
   assertEqual(e.validators.checkText(), true);
 });
 
+testSuite.addTest("Initialization fails with non-object validators", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      validators: "not-an-object",
+    });
+  }, "validators property is not an object");
+});
+
 testSuite.addTest("Initialization fails with non-function validators", () => {
   assertThrows(() => {
     var e = new Entity({
-      domEl: document.createElement("div"),
       validators: {
         checkText: "not-a-function",
       },
     });
-  });
+  }, /validator.+is not a function/);
 });
 
 testSuite.addTest("Initialization fails with arrow function validators", () => {
@@ -111,7 +116,7 @@ testSuite.addTest("Initialization fails with arrow function validators", () => {
         checkText: () => this.domEl.innerText == "test text",
       },
     });
-  });
+  }, /validator.+cannot be an arrow function/);
 });
 
 testSuite.addTest("Utils initialize", () => {
@@ -140,6 +145,14 @@ testSuite.addTest("Utils operate", () => {
   assertEqual(e.lState.b, bVal);
 });
 
+testSuite.addTest("Initialization fails with non-object utils", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      utils: "not-an-object",
+    });
+  }, "utils property is not an object")
+});
+
 testSuite.addTest("Initialization fails with non-function utils", () => {
   assertThrows(() => {
     var e = new Entity({
@@ -148,13 +161,7 @@ testSuite.addTest("Initialization fails with non-function utils", () => {
         setB: 200,
       },
     });
-    const aVal = 100;
-    const bVal = 200;
-    e.utils.setA(aVal);
-    e.utils.setB(bVal);
-    assertEqual(e.lState.a, aVal);
-    assertEqual(e.lState.b, bVal);
-  });
+  }, /utility.+is not a function/);
 });
 
 testSuite.addTest("Initialization fails with arrow function utils", () => {
@@ -165,33 +172,41 @@ testSuite.addTest("Initialization fails with arrow function utils", () => {
         setB: (n) => this.lState.b = n,
       },
     });
-    const aVal = 100;
-    const bVal = 200;
-    e.utils.setA(aVal);
-    e.utils.setB(bVal);
-    assertEqual(e.lState.a, aVal);
-    assertEqual(e.lState.b, bVal);
+  }, /utility.+cannot be an arrow function/);
+});
+
+testSuite.addTest("Event listeners initialize (Entity._initEventListeners)", () => {
+  var e = new Entity({
+    domEl: document.createElement("div"),
+    events: {
+      click() {
+        this.lState.clicked = true;
+      },
+    },
   });
+  assertType(e.events.click, "function");
 });
 
-testSuite.addTest("", () => {
-
+testSuite.addTest("Initialization fails with non-object events", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      domEl: document.createElement("div"),
+      events: "not-an-object",
+    });
+  }, "events property is not an object");
 });
 
-testSuite.addTest("", () => {
-
-});
-
-testSuite.addTest("", () => {
-
-});
-
-testSuite.addTest("", () => {
-
-});
-
-testSuite.addTest("", () => {
-
+testSuite.addTest("Event listeners operate", () => {
+  var e = new Entity({
+    domEl: document.createElement("div"),
+    events: {
+      click() {
+        this.lState.result = 50;
+      },
+    },
+  });
+  e.domEl.dispatchEvent(new Event("click"));
+  assertEqual(e.lState.result, 50);
 });
 
 testSuite.runTests();
