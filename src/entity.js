@@ -35,6 +35,12 @@ export class Entity {
           throw new TypeError(`Cannot initialize Entity: validator "${name}" is not a function`);
         }
 
+        // Check if the function is an arrow (=>) function, which cannot be bound with
+        // a specific `this` value
+        if (/^\(.*?\).*?=>/.test(func.toString())) {
+          throw new TypeError(`Cannot initialize Entity: validator "${name}" cannot be an arrow function`)
+        }
+
         this.validators[name] = func.bind(this);
       }
     }
@@ -53,7 +59,7 @@ export class Entity {
 
         // Check if the function is an arrow (=>) function, which cannot be bound with
         // a specific `this` value
-        if (/^\(.*?\).+?=>/.test(func.toString())) {
+        if (/^\(.*?\).*?=>/.test(func.toString())) {
           throw new TypeError(`Cannot initialize Entity: utility "${name}" cannot be an arrow function`)
         }
 
