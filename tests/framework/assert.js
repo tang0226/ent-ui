@@ -32,13 +32,25 @@ function assertFalsy(val, msg) {
   assert(!Boolean(val), msg || `Expected value ${val} to be falsy`);
 }
 
-function assertThrows(fn, msg) {
+function assertThrows(fn, expectedError, msg) {
   var errorFound = false;
   try {
     fn();
   }
-  catch (error) {
+  catch (err) {
     errorFound = true;
+    if (expectedError instanceof RegExp) {
+      assert(expectedError.test(err.message), msg || `Expected error message to match ${expectedError}, got "${err.message}"`);
+    }
+    else if (typeof expectedError === "string") {
+      assert(err.message.includes(expectedError), msg || `Expected error message to include "${expectedError}", got "${err.message}"`);
+    }
+    else if (expectedError instanceof Error) {
+      assert(err.name === expectedError.name, msg || `Expected ${expectedError.name}, got ${err.name}`);
+    }
+    else if (expectedError) {
+      assert(false, "Invalid expectedError type");
+    }
   }
   assert(errorFound, msg || `Expected function to throw error`);
 }
