@@ -35,7 +35,7 @@ testSuite.addTest("Initialization fails with non-DOM element", () => {
   });
 });
 
-testSuite.addTest("Attributes initialize and operate", () => {
+testSuite.addTest("Attributes initialize", () => {
   var e = new Entity({
     attrs: { a: 1, b: 2 },
   });
@@ -43,21 +43,43 @@ testSuite.addTest("Attributes initialize and operate", () => {
   assertEqual(e.attrs.b, 2);
 });
 
-testSuite.addTest("State initializes and operates", () => {
+testSuite.addTest("Initialization fails with non-object attributes", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      attrs: "not-an-object",
+    });
+    assertEqual(e.attrs.a, 1);
+    assertEqual(e.attrs.b, 2);
+  });
+});
+
+testSuite.addTest("State initializes", () => {
   var e = new Entity({
     state: { value: 10 },
   });
   assertEqual(e.state.value, 10);
 });
 
-testSuite.addTest("Local state initializes and operates", () => {
+testSuite.addTest("Local state initializes", () => {
   var e = new Entity({
     lState: { isActive: true },
   });
   assertEqual(e.lState.isActive, true);
 });
 
-testSuite.addTest("Validators initialize and operate", () => {
+testSuite.addTest("Validators initialize", () => {
+  var e = new Entity({
+    domEl: document.createElement("div"),
+    validators: {
+      checkText() {
+        return this.domEl.innerText == "test text";
+      },
+    }
+  });
+  assertType(e.validators.checkText, "function");
+});
+
+testSuite.addTest("Validators operate", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
     validators: {
@@ -70,7 +92,40 @@ testSuite.addTest("Validators initialize and operate", () => {
   assertEqual(e.validators.checkText(), true);
 });
 
-testSuite.addTest("Utils initialize and operate", () => {
+testSuite.addTest("Initialization fails with non-function validators", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      domEl: document.createElement("div"),
+      validators: {
+        checkText: "not-a-function",
+      },
+    });
+  });
+});
+
+testSuite.addTest("Initialization fails with arrow function validators", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      domEl: document.createElement("div"),
+      validators: {
+        checkText: () => this.domEl.innerText == "test text",
+      },
+    });
+  });
+});
+
+testSuite.addTest("Utils initialize", () => {
+  var e = new Entity({
+    utils: {
+      setA(n) {this.lState.a = n},
+      setB(n) {this.lState.b = n},
+    },
+  });
+  assertType(e.utils.setA, "function");
+  assertType(e.utils.setB, "function");
+});
+
+testSuite.addTest("Utils operate", () => {
   var e = new Entity({
     utils: {
       setA(n) {this.lState.a = n},
@@ -106,8 +161,8 @@ testSuite.addTest("Initialization fails with arrow function utils", () => {
   assertThrows(() => {
     var e = new Entity({
       utils: {
-        setA: (n) => this.a = n,
-        setB: (n) => this.b = n,
+        setA: (n) => this.lState.a = n,
+        setB: (n) => this.lState.b = n,
       },
     });
     const aVal = 100;
