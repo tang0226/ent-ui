@@ -3,7 +3,7 @@ import {
   isValidPropFirstChar,
   isValidIndex,
   isValidProp,
-} from "./utils/token-validation.js";
+} from "./utils/validation.js";
 
 export class EntityPath {
   constructor(path, { copy = true } = {}) {
