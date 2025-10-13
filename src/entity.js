@@ -7,7 +7,7 @@ export class Entity {
     if (
       this.domEl !== null && this.domEl !== undefined &&
       !(this.domEl instanceof Element)
-    ) throw new TypeError("Cannot initialize Entity: domElement property is not an Element");
+    ) throw new TypeError("Cannot initialize Entity: domEl property is not a DOM element");
 
     // Attributes
     this.attrs = config.attrs || null;
@@ -56,13 +56,16 @@ export class Entity {
     }
 
     // Event listeners
-    if (config.events && this.domEl) {
-      if (typeof config.events !== "object") {
+    const events = config.events || null;
+    if (events && this.domEl) {
+      if (typeof events !== "object") {
         throw new TypeError("Cannot initialize Entity: events property is not an object");
       }
 
-      for (const [event, handler, options] of Object.entries(config.events)) {
-        this.domEl.addEventListener(event, handler.bind(this), options);
+      this.events = events;
+
+      if (this.domEl) {
+        this._initEvents();
       }
     }
 
@@ -89,13 +92,7 @@ export class Entity {
         this.children = {};
       }
     }
-    
-    // If the Entity is a leaf, ensure it has a DOM element
-    if (this.type == "leaf") {
-      if (!this.domEl) {
-        throw new Error("Leaf entity must have an associated DOM element");
-      }
-    }
+
 
     // Add children
     if (this.type == "group") {
@@ -126,6 +123,19 @@ export class Entity {
   // END CONSTRUCTOR
   // -----------------------------------------------------------
 
+
+  // Links the Entity to a DOM element; should only be run once, and only if no DOM element was passed at initialization
+  setDomEl(domEl) {
+    if (this.domEl) {
+      throw new Error(`Cannot set DOM element of Entity "${this.path.toString()}": Entity already has a DOM element`);
+    }
+    if (!(domEl instanceof Element)) {
+      throw new TypeError(`Cannot set DOM element of Entity "${this.path.toString()}": ${domEl} is not an Element`);
+    }
+
+    this.domEl = domEl;
+    this._initEventListeners();
+  }
 
   // entObj can be either a config object or an Entity instance
   addEntity(entObj, token, { _updateHierarchy = true } = {}) {
@@ -207,6 +217,16 @@ export class Entity {
       return;
     }
     throw new TypeError(`Cannot call forEachChild on entity "${this.path.toString()}": not a group or list`);
+  }
+
+
+  // Attaches all events to DOM element if possible
+  _initEventListeners() {
+    if (this.domEl) {
+      for (const [event, handler, options] of Object.entries(this.events)) {
+        this.domEl.addEventListener(event, handler.bind(this), options);
+      }
+    }
   }
 
 
