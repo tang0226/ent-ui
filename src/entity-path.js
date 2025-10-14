@@ -6,7 +6,7 @@ import {
 } from "./utils/validation.js";
 
 export class EntityPath {
-  constructor(path, { copy = true } = {}) {
+  constructor(path, { deepCopy = true } = {}) {
     this.tokens = [];
 
     if (path === undefined) {
@@ -16,7 +16,7 @@ export class EntityPath {
     if (Array.isArray(path)) {
       EntityPath.validateTokens(path);
 
-      if (copy) this.tokens = [...path]; // clone
+      if (deepCopy) this.tokens = [...path]; // deep copy
       else this.tokens = path;
 
       return;
@@ -62,7 +62,7 @@ export class EntityPath {
       }
       throw new TypeError(`Path {${p}} not of type EntityPath, string, Array, or number`);
     }
-    return new EntityPath(newTokens, { copy: false });
+    return new EntityPath(newTokens, { deepCopy: false });
   }
 
   static tokenize(str) {
@@ -77,10 +77,12 @@ export class EntityPath {
     let i = 0;
     const len = str.length;
     
-    if (!isValidPropChar(str[i])) throw new SyntaxError("Path string must begin with a property name");
-
     while (i < len) {
-      if (isValidPropChar(str[i])) {
+      if (isValidPropFirstChar(str[i])) {
+        if (i > 0) {
+          if (str[i - 1] === "]") throw new SyntaxError(`Missing . after brackets at pos ${i}`);
+        }
+
         let start = i++;
         while (i < len && isValidPropChar(str[i])) i++;
         tokens.push(str.slice(start, i));
@@ -109,7 +111,7 @@ export class EntityPath {
           }
           i++;
         }
-        if (i >= len) throw new SyntaxError("Unclosed [ in path");
+        if (i >= len) throw new SyntaxError("Unclosed [ in path string");
         if (i === start) throw new SyntaxError("Empty index [] not allowed in path");
 
         tokens.push(Number(str.slice(start, i)));

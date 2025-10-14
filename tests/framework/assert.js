@@ -6,10 +6,24 @@ function assertEqual(a, b, msg) {
   assert(a === b, msg);
 }
 
+function assertNotEqual(a, b, msg) {
+  assert(a !== b, msg);
+}
+
+// Does not work on self-referencing objects
 function assertDeepEqual(a, b, msg) {
-  const aStr = JSON.stringify(a);
-  const bStr = JSON.stringify(b);
-  assert(aStr === bStr, msg || `Expected deep equality:\n${aj}\n${bj}`);
+  if (a === b) return;
+  assertEqual(typeof a, typeof b, msg);
+  if (typeof a === "object" && typeof b === "object") {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    assertEqual(keysA.length, keysB.length, msg);
+    for (const key of keysA) {
+      assertDeepEqual(a[key], b[key], msg);
+    }
+    return;
+  }
+  assertEqual(a, b, msg);
 }
 
 function assertType(val, type, msg) {
@@ -69,6 +83,7 @@ function assertDoesNotThrow(fn, msg) {
 export {
   assert,
   assertEqual,
+  assertNotEqual,
   assertDeepEqual,
   assertType,
   assertInstance,

@@ -1,9 +1,9 @@
 import { Entity } from "../src/entity.js";
-import { $ } from "../src/utils/dom.js";
 import { TestSuite } from "./framework/test-suite.js";
 import {
   assert,
   assertEqual,
+  assertNotEqual,
   assertDeepEqual,
   assertType,
   assertInstance,

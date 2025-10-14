@@ -38,10 +38,10 @@ export class TestSuite {
     }
 
     if (this.passed == this.testCount) {
-      console.log(`✅ all tests (${this.passed}/${this.testCount}) passed`);
+      console.log(`✅ all tests (${this.passed}/${this.testCount}) passed\n `);
       return true;
     }
-    console.log(`⚠️ ${this.passed}/${this.testCount} tests passed; ${this.failed} failed`);
+    console.log(`⚠️ ${this.passed}/${this.testCount} tests passed; ${this.failed} failed\n `);
     return false;
   }
 }
