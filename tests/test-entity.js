@@ -181,7 +181,7 @@ testSuite.addTest("Initialization fails with arrow function utils", () => {
 });
 
 // Event listeners
-testSuite.addTest("_initEventListeners: Event listeners initialize", () => {
+testSuite.addTest("_initEventListeners(): Event listeners initialize", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
     events: {

@@ -1,29 +1,9 @@
 TODO:
   * Fix token stringification (entUI.getEntity "Invalid token" errors)
   * Allow EntUI initialization from config object
-  * Initialize UI state (by default or as predefined in standalone Entity)
-  * Add init options
-    * figure out order that init() calls should run
 
 
 --------------------------------------------------------------
-
-Cluttered and chaotic planning / theory:
-
-Initialization of path props:
-
-When an entity is created, it starts with no path.
-
-updatePaths utility: updates self path and all children:
- * Get path of parent, join this.key to that path
- * call updatePaths for all children
-
-addEntity: append 
-
-Idea: initialize structure with tokens and parents data.
-Then, at the end of the constructor, after all children and stuff have been added,
-run updatePaths ONLY IF THIS ENTITY HAS NO PARENT. This way, we are guaranteed to begin from the top level
-
 
 
 Target API calls
