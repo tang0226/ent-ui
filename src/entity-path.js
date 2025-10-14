@@ -27,7 +27,7 @@ export class EntityPath {
       this.tokens = EntityPath.tokenize(path);
       return;
     }
-    throw new TypeError("EntityPath requires a string or an array");
+    throw new TypeError("EntityPath constructor requires an EntityPath object, a string, or an array of tokens");
   }
 
   toString() {

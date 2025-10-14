@@ -40,18 +40,19 @@ testSuite.addTest("validateTokens() rejects invalid properties", () => {
 });
 
 testSuite.addTest("validateTokens() rejects invalid token types", () => {
+  const errorTarget = "Token of invalid type: ";
   assertThrows(() => {
     EntityPath.validateTokens([{}]);
-  }, "Token of invalid type: ");
+  }, errorTarget);
   assertThrows(() => {
     EntityPath.validateTokens([null]);
-  }, "Token of invalid type: ");
+  }, errorTarget);
   assertThrows(() => {
     EntityPath.validateTokens([undefined]);
-  }, "Token of invalid type: ");
+  }, errorTarget);
   assertThrows(() => {
     EntityPath.validateTokens([() => {}]);
-  }, "Token of invalid type: ");
+  }, errorTarget);
 });
 
 // EntityPath.tokenize()
@@ -125,6 +126,22 @@ testSuite.addTest("Normal path initializes", () => {
   assertDeepEqual(p.tokens, tokens);
 });
 
+testSuite.addTest("Initialization fails when path is not a string or array", () => {
+  const errorTarget = "requires an EntityPath object, a string, or an array of tokens";
+  assertThrows(() => {
+    var p = new EntityPath(10);
+  }, errorTarget);
+  assertThrows(() => {
+    var p = new EntityPath(false);
+  },errorTarget);
+  assertThrows(() => {
+    var p = new EntityPath({});
+  },errorTarget);
+  assertThrows(() => {
+    var p = new EntityPath(null);
+  },errorTarget);
+});
+
 testSuite.addTest("deepCopy flag makes a deep copy when true", () => {
   var tokens = [0, 1, 2];
   var p = new EntityPath(tokens);
@@ -150,6 +167,74 @@ testSuite.addTest("toString() returns correct string", () => {
 });
 
 // EntityPath.join()
+testSuite.addTest("join() accepts EntityPath objects", () => {
+  var p = EntityPath.join(
+    new EntityPath([0, "foo"]),
+    new EntityPath(["bar", 1]),
+  );
+  assertDeepEqual(p.tokens, [0, "foo", "bar", 1]);
+});
+
+testSuite.addTest("join() accepts strings", () => {
+  var p = EntityPath.join(
+    "[0].foo",
+    "bar[1]",
+    "baz[0].qux",
+  );
+  assertDeepEqual(p.tokens, [0, "foo", "bar", 1, "baz", 0, "qux"]);
+});
+
+testSuite.addTest("join() accepts arrays", () => {
+  var p = EntityPath.join(
+    [0, "foo"],
+    ["bar", 1],
+    ["baz", 0, "qux"],
+  );
+  assertDeepEqual(p.tokens, [0, "foo", "bar", 1, "baz", 0, "qux"]);
+});
+
+testSuite.addTest("join() accepts indices", () => {
+  var p = EntityPath.join(0, 1);
+  assertDeepEqual(p.tokens, [0, 1]);
+});
+
+testSuite.addTest("join() rejects invalid indices", () => {
+  assertThrows(() => {
+    var p = EntityPath.join(0.5, 1);
+  }, "invalid index");
+  assertThrows(() => {
+    var p = EntityPath.join(0, -1);
+  }, "invalid index");
+});
+
+testSuite.addTest("join() rejects invalid types", () => {
+  const errorTarget = "not of type EntityPath, string, Array, or number";
+  assertThrows(() => {
+    var p = EntityPath.join("foo", null);
+  }, errorTarget);
+  assertThrows(() => {
+    var p = EntityPath.join("foo", undefined);
+  }, errorTarget);
+  assertThrows(() => {
+    var p = EntityPath.join("foo", {});
+  }, errorTarget);
+  assertThrows(() => {
+    var p = EntityPath.join("foo", true);
+  }, errorTarget);
+});
+
+testSuite.addTest("join() accepts mixed types", () => {
+  var p = EntityPath.join(
+    new EntityPath("foo.bar[0]"),
+    "[1].baz",
+    [2, 3, "qux"],
+    4, 5,
+  );
+  assertDeepEqual(
+    p.tokens,
+    ["foo", "bar", 0, 1, "baz", 2, 3, "qux", 4, 5],
+  );
+});
 
 
 testSuite.runTests();
