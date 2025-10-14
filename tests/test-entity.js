@@ -231,4 +231,10 @@ testSuite.addTest("Event listeners operate", () => {
   assertEqual(e.lState.result, 50);
 });
 
+testSuite.addTest("setDomEl operates", () => {
+  var e = new Entity({});
+  e.setDomEl(document.createElement("div"));
+  assertInstance(e.domEl, Element);
+});
+
 testSuite.runTests();

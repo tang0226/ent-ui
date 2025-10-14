@@ -74,15 +74,13 @@ export class Entity {
     }
 
     // Event listeners
-    const events = config.events || {};
-    if (events && this.domEl) {
-      if (typeof events !== "object") {
+    this.events = config.events || {};
+    if (this.domEl) {
+      if (typeof this.events !== "object") {
         throw new TypeError("Cannot initialize Entity: events property is not an object");
       }
 
-      this.events = events;
-
-      if (this.domEl) {
+      if (Object.keys(this.events).length) {
         this._initEventListeners();
       }
     }
