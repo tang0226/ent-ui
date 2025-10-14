@@ -20,6 +20,7 @@ testSuite.addTest("Initialization succeeds with empty config object", () => {
   new Entity({});
 });
 
+// Initial DOM element
 testSuite.addTest("Initialization succeeds with valid DOM element", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
@@ -35,6 +36,7 @@ testSuite.addTest("Initialization fails with non-DOM element", () => {
   }, "domEl property is not a DOM element");
 });
 
+// Attributes
 testSuite.addTest("Attributes initialize", () => {
   var e = new Entity({
     attrs: { a: 1, b: 2 },
@@ -51,6 +53,7 @@ testSuite.addTest("Initialization fails with non-object attributes", () => {
   }, "attributes property is not an object");
 });
 
+// State and local state
 testSuite.addTest("State initializes", () => {
   var e = new Entity({
     state: { value: 10 },
@@ -65,6 +68,7 @@ testSuite.addTest("Local state initializes", () => {
   assertEqual(e.lState.isActive, true);
 });
 
+// Validators
 testSuite.addTest("Validators initialize", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
@@ -119,6 +123,7 @@ testSuite.addTest("Initialization fails with arrow function validators", () => {
   }, /validator.+cannot be an arrow function/);
 });
 
+// Utils
 testSuite.addTest("Utils initialize", () => {
   var e = new Entity({
     utils: {
@@ -175,6 +180,7 @@ testSuite.addTest("Initialization fails with arrow function utils", () => {
   }, /utility.+cannot be an arrow function/);
 });
 
+// Event listeners
 testSuite.addTest("_initEventListeners: Event listeners initialize", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
@@ -231,10 +237,70 @@ testSuite.addTest("Event listeners operate", () => {
   assertEqual(e.lState.result, 50);
 });
 
-testSuite.addTest("setDomEl operates", () => {
+// Entity.setDomEl()
+testSuite.addTest("setDomEl() operates", () => {
   var e = new Entity({});
   e.setDomEl(document.createElement("div"));
   assertInstance(e.domEl, Element);
+});
+
+testSuite.addTest("setDomEl() fails when Entity already has a DOM element", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      domEl: document.createElement("div"),
+    });
+    e.setDomEl(document.createElement("div"));
+  }, "Entity already has a DOM element");
+});
+
+testSuite.addTest("setDomEl() fails when domEl param is not an Element", () => {
+  assertThrows(() => {
+    var e = new Entity({});
+    e.setDomEl({});
+  }, "is not an Element");
+});
+
+
+// Children and hierarchy
+testSuite.addTest("Entity initialized with empty config object is of type \"leaf\"", () => {
+  var e = new Entity({});
+  assertEqual(e.type, "leaf");
+});
+
+testSuite.addTest("Entity initialized with empty children object is of type \"group\"", () => {
+  var e = new Entity({
+    children: {},
+  });
+  assertEqual(e.type, "group");
+});
+
+testSuite.addTest("Entity initialized with empty children array is of type \"list\"", () => {
+  var e = new Entity({
+    children: [],
+  });
+  assertEqual(e.type, "list");
+});
+
+testSuite.addTest("Group Entity initialized with single child entity has correct hierarchy", () => {
+  var e = new Entity({
+    children: {
+      child: {},
+    },
+  });
+  var child = e.children.child;
+  assertInstance(child, Entity);
+  assertEqual(child.parent, e);
+  assertEqual(child.token, "child");
+});
+
+testSuite.addTest("List Entity initialized with single child entity has correct hierarchy", () => {
+  var e = new Entity({
+    children: [{}],
+  });
+  var child = e.children[0];
+  assertInstance(child, Entity);
+  assertEqual(child.parent, e);
+  assertEqual(child.token, 0);
 });
 
 testSuite.runTests();
