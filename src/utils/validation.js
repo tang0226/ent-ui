@@ -3,7 +3,7 @@ function isValidPropChar(c) {
 }
 
 function isValidPropFirstChar(c) {
-  return /[a-zA-A_$]/.test(c);
+  return /[a-zA-Z_$]/.test(c);
 }
 
 function isValidIndex(n) {
