@@ -288,6 +288,8 @@ testSuite.addTest("setDomEl() fails when domEl param is not an Element", () => {
 
 
 // Children and hierarchy
+
+// Constructor
 testSuite.addTest("Entity initialized with empty config object is of type \"leaf\"", () => {
   var e = new Entity({});
   assertEqual(e.type, "leaf");
@@ -323,6 +325,7 @@ testSuite.addTest("List Entity initialized with single child entity has correct 
   assertParentChild(e, e.children[0]);
 });
 
+// forEachChild()
 testSuite.addTest("forEachChild loops through each direct child (group)", () => {
   var e = new Entity({
     children: {
@@ -358,6 +361,7 @@ testSuite.addTest("forEachChild fails on non-parent Entity", () => {
   }, /Cannot call forEachChild.+not a group or list/);
 });
 
+// addEntity
 testSuite.addTest("addEntity adds an Entity to children and updates the hierarchy (config obj passed)", () => {
   var e = new Entity({
     children: {},
@@ -373,5 +377,105 @@ testSuite.addTest("addEntity adds an Entity to children and updates the hierarch
   e.addEntity(new Entity({}), "child");
   assertValidHierarchy(e);
 });
+
+testSuite.addTest("addEntity provides default token when adding to list", () => {
+  var e = new Entity({
+    children: [{}],
+  });
+  e.addEntity({ lState: { a: 2 } }); // no index token provided; addEntity should by default add this Ent to the end of the list
+  assertEqual(e.children[1].lState.a, 2, "lState of added Entity not set");
+});
+
+testSuite.addTest("addEntity inserts child at specified index in list Entity", () => {
+  var e = new Entity({
+    children: [{}, {}, {}],
+  });
+  var child = new Entity({
+    lState: { a: 2 },
+  });
+  e.addEntity(child, 2); // Specify the index
+  // Check that the child is at the specified index
+  assertEqual(e.children[2], child, "child not inserted at correct index");
+});
+
+testSuite.addTest("addEntity works when adding grandchildren", () => {
+  var e = new Entity({
+    children: {},
+  });
+  e.addEntity(new Entity({ children: [] }), "child");
+  e.children.child.addEntity({});
+  assertValidHierarchy(e);
+});
+
+testSuite.addTest("addEntity _updateHierarchy option skips the hierarchy initialization if set to false", () => {
+  var e = new Entity({
+    children: {},
+  });
+  e.addEntity({}, "child", { _updateHierarchy: false });
+  // Make sure the hierarchy initialization was skipped (e should have an invalid hier.)
+  assertThrows(() => {
+    assertValidHierarchy(e);
+  });
+});
+
+// addEntity validation
+testSuite.addTest("addEntity fails when attempting to add to leaf Entity", () => {
+  var e = new Entity();
+  assertThrows(() => {
+    e.addEntity({});
+  }, "Cannot add Entity to leaf Entity");
+});
+
+testSuite.addTest("addEntity fails when adding to group with no token provided", () => {
+  var e = new Entity({
+    children: {},
+  });
+  assertThrows(() => {
+    e.addEntity({});
+  }, "no token provided");
+});
+
+testSuite.addTest("addEntity fails if Entity to add already has a parent", () => {
+  var e = new Entity({
+    children: { child: {} },
+  });
+  assertThrows(() => {
+    e.addEntity({}, "child");
+  }, "already exists");
+});
+
+testSuite.addTest("addEntity fails when adding to list at non-number index", () => {
+  var e = new Entity({
+    children: [],
+  });
+  assertThrows(() => {
+    e.addEntity({}, "NaN");
+  }, "Token to add an Entity must be a number");
+});
+
+testSuite.addTest("addEntity fails when Entity to add already has a parent", () => {
+  var e1 = new Entity({
+    children: {
+      child: {},
+    },
+  });
+  var e2 = new Entity({
+    children: {},
+  });
+  assertThrows(() => {
+    e2.addEntity(e1.children.child, "child");
+  }, "Entity already has a parent");
+});
+
+testSuite.addTest("addEntity fails when a non-object is passed", () => {
+  var e = new Entity({
+    children: {},
+  })
+  assertThrows(() => {
+    e.addEntity("not-an-object", "child");
+  }, "Entity to add is not an object");
+});
+
+
 
 testSuite.runTests();

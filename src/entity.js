@@ -165,9 +165,6 @@ export class Entity {
 
     // Token validation
     if (this.type == "group") {
-      if (typeof token != "string") {
-        throw new TypeError("Token to add an Entity must be a string when adding to a group");
-      }
       if (this.children[token]) {
         throw new ReferenceError(`Error adding child ${token} to group "${this.path.toString()}": already exists`);
       }
@@ -175,7 +172,7 @@ export class Entity {
 
     if (this.type == "list") {
       if (typeof token != "number") {
-        throw new TypeError("Token to add an Entity must be an integer when adding to a list");
+        throw new TypeError("Token to add an Entity must be a number when adding to a list");
       }
     }
 
