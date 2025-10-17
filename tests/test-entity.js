@@ -476,6 +476,32 @@ testSuite.addTest("addEntity fails when a non-object is passed", () => {
   }, "Entity to add is not an object");
 });
 
-
+testSuite.addTest("Hierarchy is valid with deep nesting", () => {
+  assertValidHierarchy(new Entity({
+    children: [
+      {
+        children: {
+          c1: {
+            children: [{}, {}],
+          },
+          c2: {},
+        }
+      },
+      {
+        children: {
+          c1: {},
+          c2: {
+            children: [
+              {}, {},
+              {
+                children: [{}, {}],
+              },
+            ],
+          },
+        },
+      },
+    ],
+  }));
+});
 
 testSuite.runTests();
