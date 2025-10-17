@@ -14,6 +14,32 @@ import {
   assertDoesNotThrow,
 } from "./framework/assert.js";
 
+// For checking Entity hierarchy
+function assertParentChild(parent, child) {
+  assertEqual(parent.children[child.token], child, "parent.children contain a match with child's token");
+  assertDeepEqual(child.path.tokens, [...parent.path.tokens, child.token], "child tokens incorrect");
+}
+
+// Check hierarchy for root and all descendants
+function assertValidHierarchy(entity, currTokens = null) {
+  if (currTokens === null) {
+    currTokens = entity.path.tokens;
+  }
+  entity.forEachChild(function(c, token) {
+    const newTokens = [...currTokens, c.token];
+
+    // Assert the child's token, path, and parent props
+    assertEqual(c.token, token, "child's token incorrect");
+    assertDeepEqual(c.path.tokens, newTokens, "child's path incorrect");
+    assertEqual(c.parent, this, "child's parent reference incorrect");
+
+    // Recursive call with the current path if the child has subsequent children
+    if (c.children) {
+      assertValidHierarchy(c, newTokens);
+    }
+  });
+}
+
 const testSuite = new TestSuite("Entity");
 
 testSuite.addTest("Initialization succeeds with empty config object", () => {
@@ -287,20 +313,65 @@ testSuite.addTest("Group Entity initialized with single child entity has correct
       child: {},
     },
   });
-  var child = e.children.child;
-  assertInstance(child, Entity);
-  assertEqual(child.parent, e);
-  assertEqual(child.token, "child");
+  assertParentChild(e, e.children.child);
 });
 
 testSuite.addTest("List Entity initialized with single child entity has correct hierarchy", () => {
   var e = new Entity({
     children: [{}],
   });
-  var child = e.children[0];
-  assertInstance(child, Entity);
-  assertEqual(child.parent, e);
-  assertEqual(child.token, 0);
+  assertParentChild(e, e.children[0]);
+});
+
+testSuite.addTest("forEachChild loops through each direct child (group)", () => {
+  var e = new Entity({
+    children: {
+      one: {},
+      two: {},
+      three: {},
+    },
+  });
+  e.forEachChild((c, token) => {
+    c.lState.name = token;
+  });
+  assertEqual(e.children.one.lState.name, "one");
+  assertEqual(e.children.two.lState.name, "two");
+  assertEqual(e.children.three.lState.name, "three");
+});
+
+testSuite.addTest("forEachChild loops through each direct child (list)", () => {
+  var e = new Entity({
+    children: [{}, {}, {}],
+  });
+  e.forEachChild((c, token) => {
+    c.lState.index = token;
+  });
+  assertEqual(e.children[0].lState.index, 0);
+  assertEqual(e.children[1].lState.index, 1);
+  assertEqual(e.children[2].lState.index, 2);
+});
+
+testSuite.addTest("forEachChild fails on non-parent Entity", () => {
+  assertThrows(() => {
+    var e = new Entity();
+    e.forEachChild((c) => {});
+  }, /Cannot call forEachChild.+not a group or list/);
+});
+
+testSuite.addTest("addEntity adds an Entity to children and updates the hierarchy (config obj passed)", () => {
+  var e = new Entity({
+    children: {},
+  });
+  e.addEntity({}, "child");
+  assertValidHierarchy(e);
+});
+
+testSuite.addTest("addEntity adds an Entity to children and updates the hierarchy (Entity instance passed)", () => {
+  var e = new Entity({
+    children: {},
+  });
+  e.addEntity(new Entity({}), "child");
+  assertValidHierarchy(e);
 });
 
 testSuite.runTests();

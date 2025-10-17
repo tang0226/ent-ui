@@ -154,6 +154,15 @@ export class Entity {
       throw new TypeError("Cannot add Entity to leaf Entity");
     }
 
+    if (token === undefined) {
+      if (this.type === "list") {
+        token = this.children.length;
+      }
+      else {
+        throw new Error("Cannot add Entity to group Entity: no token provided");
+      }
+    }
+
     // Token validation
     if (this.type == "group") {
       if (typeof token != "string") {
@@ -165,13 +174,8 @@ export class Entity {
     }
 
     if (this.type == "list") {
-      if (token === undefined) {
-        token = this.children.length;
-      }
-      else {
-        if (typeof token != "number") {
-          throw new TypeError("Token to add an Entity must be an integer when adding to a list");
-        }
+      if (typeof token != "number") {
+        throw new TypeError("Token to add an Entity must be an integer when adding to a list");
       }
     }
 
@@ -215,6 +219,10 @@ export class Entity {
   
 
   forEachChild(func) {
+    if (!isArrowFunction(func)) {
+      func = func.bind(this);
+    }
+
     if (this.type == "group") {
       for (const [token, child] of Object.entries(this.children)) {
         func(child, token);
