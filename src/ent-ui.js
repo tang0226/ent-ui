@@ -185,9 +185,4 @@ export class EntUI {
     }
     return stateTree;
   }
-
-
-  static createEntity(config) {
-    return new Entity(config);
-  }
 }
