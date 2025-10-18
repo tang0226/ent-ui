@@ -1,6 +1,13 @@
 import { EntityPath } from "./entity-path.js";
 import { isArrowFunction } from "./utils/validation.js";
 
+class InitError extends Error {
+  constructor(msg) {
+    super(`Cannot initialize Entity: ${msg}`);
+  }
+}
+
+
 export class Entity {
   constructor(config = {}, { _parent = null, _token = null } = {}) {
     // Path properties
@@ -13,14 +20,14 @@ export class Entity {
     if (
       this.domEl !== null && this.domEl !== undefined &&
       !(this.domEl instanceof Element)
-    ) throw new TypeError("Cannot initialize Entity: domEl property is not a DOM element");
+    ) throw new InitError("domEl property is not a DOM element");
 
     // Attributes
     this.attrs = config.attrs || {};
     if (
       this.attrs !== null && this.attrs !== undefined &&
       typeof this.attrs !== "object"
-    ) throw new TypeError("Cannot initialize Entity: attributes property is not an object");
+    ) throw new InitError("attributes property is not an object");
 
     // Temp state
     this.state = config.state || {};
@@ -33,18 +40,18 @@ export class Entity {
     this.validators = {};
     if (validators) {
       if (typeof validators !== "object") {
-        throw new TypeError("Cannot initialize Entity: validators property is not an object");
+        throw new InitError("validators property is not an object");
       }
 
       for (const [name, func] of Object.entries(validators)) {
         if (typeof func !== "function") {
-          throw new TypeError(`Cannot initialize Entity: validator "${name}" is not a function`);
+          throw new InitError(`validator "${name}" is not a function`);
         }
 
         // Check if the function is an arrow (=>) function, which cannot be bound with
         // a specific `this` value
         if (isArrowFunction(func)) {
-          throw new TypeError(`Cannot initialize Entity: validator "${name}" cannot be an arrow function`)
+          throw new InitError(`validator "${name}" cannot be an arrow function`)
         }
 
         this.validators[name] = func.bind(this);
@@ -55,18 +62,18 @@ export class Entity {
     this.utils = {};
     if (config.utils) {
       if (typeof config.utils !== "object") {
-        throw new TypeError("Cannot initialize Entity: utils property is not an object");
+        throw new InitError("utils property is not an object");
       }
 
       for (const [name, func] of Object.entries(config.utils)) {
         if (typeof func !== "function") {
-          throw new TypeError(`Cannot initialize Entity: utility "${name}" is not a function`);
+          throw new InitError(`utility "${name}" is not a function`);
         }
 
         // Check if the function is an arrow (=>) function, which cannot be bound with
         // a specific `this` value
         if (isArrowFunction(func)) {
-          throw new TypeError(`Cannot initialize Entity: utility "${name}" cannot be an arrow function`)
+          throw new InitError(`utility "${name}" cannot be an arrow function`)
         }
 
         this.utils[name] = func.bind(this);
@@ -77,7 +84,7 @@ export class Entity {
     this.events = config.events || {};
     if (this.domEl) {
       if (typeof this.events !== "object") {
-        throw new TypeError("Cannot initialize Entity: events property is not an object");
+        throw new InitError("events property is not an object");
       }
 
       if (Object.keys(this.events).length) {
@@ -241,10 +248,10 @@ export class Entity {
     if (this.domEl) {
       for (const [event, handler] of Object.entries(this.events)) {
         if (typeof handler != "function") {
-          throw new Error(`Cannot initialize Entity "${this.path.toString()}": ${event} event handler must be a function`);
+          throw new InitError(`${event} event handler must be a function`);
         }
         if (isArrowFunction(handler)) {
-          throw new Error(`Cannot initialize Entity "${this.path.toString()}": ${event} event handler cannot be an arrow function`);
+          throw new InitError(`${event} event handler cannot be an arrow function`);
         }
         this.domEl.addEventListener(event, handler.bind(this));
       }
