@@ -1,9 +1,15 @@
 import { EntityPath } from "./entity-path.js";
-import { isArrowFunction } from "./utils/validation.js";
+import { isArrowFunction, isValidParentOperator } from "./utils/validation.js";
 
 class InitError extends Error {
   constructor(msg) {
     super(`Cannot initialize Entity: ${msg}`);
+  }
+}
+
+class EntityGetError extends Error {
+  constructor(src, msg) {
+    super(`getEntity() from Entity "${src.path.toString()}": ${msg}`);
   }
 }
 
@@ -216,6 +222,55 @@ export class Entity {
     }
     if (this.type == "list") {
       this.children.splice(token, 0, entity);
+    }
+
+    return entity;
+  }
+
+  getEntity(path) {
+    // Validate path and initialize as an EntityPath instance
+    if (path === undefined) throw new EntityGetError(this, "no path provided");
+    if (!(path instanceof EntityPath)) {
+      if (typeof path == "string" || Array.isArray(path)) {
+        path = new EntityPath(path);
+      }
+      else if (typeof path == "number") {
+        path = new EntityPath([path]);
+      }
+      else {
+        throw new EntityGetError(this, `path {${path}} not an EntityPath, string, array, or index`);
+      }
+    }
+
+    const tokens = path.tokens;
+    if (tokens.length == 0) return this;
+
+    var entity = this;
+    var i = 0;
+    if (isValidParentOperator(tokens[0])) {
+      // Traverse up the tree according to the number of ^
+      for (let j = 0; j < tokens[0].length; j++) {
+        if (!entity.parent) {
+          throw new EntityGetError(this, `parent operator error at index ${j}: Entity "${entity.path.toString()}" has no parent`);
+        }
+        entity = entity.parent;
+      }
+      
+      // Start descending from the second token
+      i++;
+    }
+
+    for (; i < tokens.length; i++) {
+      if (!entity.children) {
+        throw new EntityGetError(this, `Entity "${entity.path.toString()}" has no children`);
+      }
+
+      const token = tokens[i];
+      let prevEntity = entity;
+      entity = entity.children[token];
+      if (entity === undefined) {
+        throw new EntityGetError(this, `Entity "${prevEntity.path.toString()}" has no child with token "${token}"`);
+      }
     }
 
     return entity;

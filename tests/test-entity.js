@@ -504,4 +504,87 @@ testSuite.addTest("Hierarchy is valid with deep nesting", () => {
   }));
 });
 
+// getEntity()
+testSuite.addTest("getEntity succeeds with basic descendant relationship", () => {
+  var e = new Entity({
+    children: [
+      {},
+      {
+        children: {
+          one: {},
+          two: { children: [{}, {}] },
+        },
+      },
+    ],
+  });
+  assertEqual(
+    e.children[1].children.two.children[1],
+    e.getEntity("[1].two[1]"),
+  );
+});
+
+testSuite.addTest("getEntity succeeds with parent operator", () => {
+  var e = new Entity({
+    children: [
+      {
+        children: {
+          one: { children: [{}, {}] },
+        }
+      },
+      { children: { two: {} } },
+    ],
+  });
+  assertEqual(
+    e.children[0].children.one.children[1],
+    e.children[1].children.two.getEntity("^^[0].one[1]"),
+  );
+});
+
+testSuite.addTest("getEntity fails when path not provided", () => {
+  var e = new Entity({ children: [{}] });
+  assertThrows(() => {
+    e.getEntity();
+  }, "no path provided");
+});
+
+testSuite.addTest("getEntity fails with invalid path type", () => {
+  var e = new Entity();
+  assertThrows(() => {
+    e.getEntity({});
+  }, "not an EntityPath, string, array, or index");
+});
+
+testSuite.addTest("getEntity fails with excess parent operator", () => {
+  var e = new Entity({
+    children: [
+      {
+        children: [{}],
+      },
+    ],
+  });
+  assertThrows(() => {
+    e.children[0].children[0].getEntity("^^^");
+  }, "parent operator error at index 2");
+});
+
+testSuite.addTest("getEntity fails when attempting to access child of leaf Entity", () => {
+  var e = new Entity({
+    children: [{}],
+  });
+  assertThrows(() => {
+    e.getEntity("[0].nonExistent");
+  }, "has no children");
+});
+
+testSuite.addTest("getEntity fails when attempting to access nonexistent child", () => {
+  var e = new Entity({
+    children: [{
+      children: { one: {} },
+    }],
+  });
+  assertThrows(() => {
+    e.getEntity("[0].wrongToken");
+  }, "has no child with token \"wrongToken\"");
+});
+
 testSuite.runTests();

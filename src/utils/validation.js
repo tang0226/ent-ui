@@ -15,6 +15,7 @@ function isValidProp(str) {
 }
 
 function isValidParentOperator(str) {
+  if (typeof str !== "string") return false;
   return str.split("").every((char) => char === "^");
 }
 

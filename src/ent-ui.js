@@ -15,16 +15,16 @@ export class EntUI {
   // Can add a top-level Entity to the UI or a sub-Entity to an existing Entity, depending on `path`
   // entObj can be either a config object or an Entity instance
   addEntity(entObj, path) {
-    if (!entObj) throw new Error("Cannot add Entity to UI: Entity instance / config object not provided");
-    if (!path) throw new Error("Cannot add Entity to UI: no path provided");
+    if (entObj === undefined) throw new Error("Cannot add Entity to UI: Entity instance / config object not provided");
+    if (path === undefined) throw new Error("Cannot add Entity to UI: no path provided");
 
     // Path validation; KEEP IN FRONT OF `entObj` VALIDATION
     if (!(path instanceof EntityPath)) {
-      if (typeof path == "string") {
+      if (typeof path == "string" || Array.isArray(path)) {
         path = new EntityPath(path);
       }
       else {
-        throw new TypeError(`Cannot add Entity to UI: path {${path}} not an EntityPath or string`);
+        throw new TypeError(`Cannot add Entity to UI: path {${path}} not an EntityPath, string, or array`);
       }
     }
 

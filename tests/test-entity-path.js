@@ -86,6 +86,11 @@ testSuite.addTest("tokenize() succeeds with normal path beginning with parent op
   assertDeepEqual(tokens, ["^^^", 0, "prop1", 0, 100, "_prop2", "$prop3_", 2, "_0", "_"]);
 });
 
+testSuite.addTest("tokenize() succeeds with path consisting of only parent operator", () => {
+  var tokens = EntityPath.tokenize("^^^");
+  assertDeepEqual(tokens, ["^^^"]);
+});
+
 testSuite.addTest("tokenize() fails with non-string input", () => {
   assertThrows(() => {
     var tokens = EntityPath.tokenize({});
