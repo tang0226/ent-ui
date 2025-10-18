@@ -103,16 +103,13 @@ export class EntUI {
       throw new Error(`UI has no top-level entity "${tokens[0]}"`);
     }
 
-    for (let token of tokens.slice(1)) {
+    for (const token of tokens.slice(1)) {
       if (!entity.children) {
         throw new Error(`Entity "${entity.path.toString()}" has no children`);
       }
-      // Check for mismatching token types
-      if (entity.type == "group" && typeof token != "string") {
-        throw new TypeError(`Invalid token: accessing Entities of group "${entity.path.toString()}" requires a string; {${token}} provided instead`);
-      }
+      // Check for mismatching token type
       if (entity.type == "list" && typeof token != "number") {
-        throw new TypeError(`Invalid token: accessing Entities of list "${entity.path.toString()}" requires a number; {${token}} provided instead`);
+        throw new TypeError(`Invalid token: accessing Entity of list "${entity.path.toString()}" requires a number; {${token}} provided instead`);
       }
 
       let nextEntity = entity.children[token];
