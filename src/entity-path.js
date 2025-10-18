@@ -83,6 +83,7 @@ export class EntityPath {
       if (i == 0 && str[i] == "^") {
         while (i < len && str[i] == "^") i++;
         tokens.push(str.slice(0, i));
+        continue;
       }
 
       if (isValidPropFirstChar(str[i])) {
