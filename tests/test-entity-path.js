@@ -21,6 +21,10 @@ testSuite.addTest("validateTokens() succeeds with valid tokens", () => {
   EntityPath.validateTokens(["abc", "_abc", "abc0_", "$", "_", "$abc", "$abc_0", 0, 2, 100, 1000]);
 });
 
+testSuite.addTest("validateTokens() succeeds with valid tokens and parent prefix", () => {
+  EntityPath.validateTokens(["^^^^", "abc", 0, "_b123"]);
+});
+
 testSuite.addTest("validateTokens() rejects invalid indices", () => {
   assertThrows(() => {
     EntityPath.validateTokens([0.1]);
@@ -55,6 +59,12 @@ testSuite.addTest("validateTokens() rejects invalid token types", () => {
   }, errorTarget);
 });
 
+testSuite.addTest("validateTokens() rejects invalid parent operator", () => {
+  assertThrows(() => {
+    EntityPath.validateTokens(["abc", "^^^"]);
+  }, "invalid parent operator");
+});
+
 // EntityPath.tokenize()
 testSuite.addTest("tokenize() succeeds with normal path beginning with a prop name", () => {
   var tokens = EntityPath.tokenize("prop1[0][100]._prop2.$prop3_[2]._0._");
@@ -64,6 +74,16 @@ testSuite.addTest("tokenize() succeeds with normal path beginning with a prop na
 testSuite.addTest("tokenize() succeeds with normal path beginning with an index", () => {
   var tokens = EntityPath.tokenize("[0].prop1[0][100]._prop2.$prop3_[2]._0._");
   assertDeepEqual(tokens, [0, "prop1", 0, 100, "_prop2", "$prop3_", 2, "_0", "_"]);
+});
+
+testSuite.addTest("tokenize() succeeds with normal path beginning with parent operator and prop name", () => {
+  var tokens = EntityPath.tokenize("^^.prop1[0][100]._prop2.$prop3_[2]._0._");
+  assertDeepEqual(tokens, ["^^", "prop1", 0, 100, "_prop2", "$prop3_", 2, "_0", "_"]);
+});
+
+testSuite.addTest("tokenize() succeeds with normal path beginning with parent operator and index", () => {
+  var tokens = EntityPath.tokenize("^^^[0].prop1[0][100]._prop2.$prop3_[2]._0._");
+  assertDeepEqual(tokens, ["^^^", 0, "prop1", 0, 100, "_prop2", "$prop3_", 2, "_0", "_"]);
 });
 
 testSuite.addTest("tokenize() fails with non-string input", () => {
@@ -76,6 +96,12 @@ testSuite.addTest("tokenize() fails with missing . after brackets", () => {
   assertThrows(() => {
     var tokens = EntityPath.tokenize("abc[0]def");
   }, "Missing . after brackets");
+});
+
+testSuite.addTest("tokenize() fails with illegal identifier after parent operator", () => {
+  assertThrows(() => {
+    var tokens = EntityPath.tokenize("^^^abc");
+  }, "Illegal identifier after ^");
 });
 
 testSuite.addTest("tokenize() fails with trailing dot at end of path", () => {
@@ -157,8 +183,8 @@ testSuite.addTest("deepCopy flag makes a shallow copy when false", () => {
 // toString()
 testSuite.addTest("toString() returns correct string", () => {
   assertEqual(
-    (new EntityPath(["_abc", 0, "foo", 1, 2, 3, "bar", "baz"])).toString(),
-    "_abc[0].foo[1][2][3].bar.baz",
+    (new EntityPath(["^^", "_abc", 0, "foo", 1, 2, 3, "bar", "baz"])).toString(),
+    "^^._abc[0].foo[1][2][3].bar.baz",
   );
   assertEqual(
     (new EntityPath([0, 1, 2])).toString(),

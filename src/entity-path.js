@@ -78,9 +78,17 @@ export class EntityPath {
     const len = str.length;
     
     while (i < len) {
+      // ^ (parent operator; prefix only)
+      if (i == 0 && str[i] == "^") {
+        while (i < len && str[i] == "^") i++;
+        tokens.push(str.slice(0, i));
+      }
+
       if (isValidPropFirstChar(str[i])) {
+        // Make sure this identifier isn't preceded by an illegal character
         if (i > 0) {
           if (str[i - 1] === "]") throw new SyntaxError(`Missing . after brackets at pos ${i}`);
+          if (str[i - 1] === "^") throw new SyntaxError(`Illegal identifier after ^ (parent operator) at pos ${i}`);
         }
 
         let start = i++;
@@ -126,17 +134,28 @@ export class EntityPath {
   }
 
   static validateTokens(tokens) {
-    for (const token of tokens) {
+    tokens.forEach((token, index) => {
       if (typeof token == "number") {
-        if (!isValidIndex(token)) throw new Error(`Token error: ${token} is not a valid index`);
-        continue;
+        if (!isValidIndex(token)) {
+          throw new Error(`Token error: ${token} is not a valid index`);
+        }
+        return;
       }
       if (typeof token == "string") {
-        if (!isValidProp(token)) throw new Error(`Token error: ${token} is not a valid property name`);
-        continue;
+        // Check for parent prefix
+        if (token.split("").every((char) => char == "^")) {
+          if (index != 0) {
+            throw new Error(`Token error: invalid parent operator: "${token}" at index ${index}`);
+          }
+          return;
+        }
+        if (!isValidProp(token)) {
+          throw new Error(`Token error: "${token}" is not a valid property name`);
+        }
+        return;
       }
       throw new Error(`Token of invalid type: {${token}}`);
-    }
+    });
   }
 }
 
