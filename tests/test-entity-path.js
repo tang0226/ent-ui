@@ -59,10 +59,10 @@ testSuite.addTest("validateTokens() rejects invalid token types", () => {
   }, errorTarget);
 });
 
-testSuite.addTest("validateTokens() rejects invalid parent operator", () => {
+testSuite.addTest("validateTokens() rejects unexpected parent operator", () => {
   assertThrows(() => {
     EntityPath.validateTokens(["abc", "^^^"]);
-  }, "invalid parent operator");
+  }, "unexpected parent operator");
 });
 
 // EntityPath.tokenize()

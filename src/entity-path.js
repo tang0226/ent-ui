@@ -3,6 +3,7 @@ import {
   isValidPropFirstChar,
   isValidIndex,
   isValidProp,
+  isValidParentOperator,
 } from "./utils/validation.js";
 
 export class EntityPath {
@@ -143,9 +144,9 @@ export class EntityPath {
       }
       if (typeof token == "string") {
         // Check for parent prefix
-        if (token.split("").every((char) => char == "^")) {
+        if (isValidParentOperator(token)) {
           if (index != 0) {
-            throw new Error(`Token error: invalid parent operator: "${token}" at index ${index}`);
+            throw new Error(`Token error: unexpected parent operator: "${token}" at index ${index}`);
           }
           return;
         }

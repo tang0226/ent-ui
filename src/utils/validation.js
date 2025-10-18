@@ -14,6 +14,10 @@ function isValidProp(str) {
   return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(str);
 }
 
+function isValidParentOperator(str) {
+  return str.split("").every((char) => char === "^");
+}
+
 function isArrowFunction(func) {
   return /^\(.*?\).*?=>/.test(func.toString());
 }
@@ -23,5 +27,6 @@ export {
   isValidPropFirstChar,
   isValidIndex,
   isValidProp,
+  isValidParentOperator,
   isArrowFunction,
 };
