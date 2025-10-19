@@ -28,6 +28,10 @@ export class EntityPath {
       this.tokens = EntityPath.tokenize(path);
       return;
     }
+    if (typeof path === "number") {
+      this.tokens = EntityPath.validateTokens([path]);
+      return;
+    }
     throw new TypeError("EntityPath constructor requires an EntityPath object, a string, or an array of tokens");
   }
 

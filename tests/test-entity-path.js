@@ -157,11 +157,14 @@ testSuite.addTest("Normal path initializes", () => {
   assertDeepEqual(p.tokens, tokens);
 });
 
+testSuite.addTest("Single index path initializes", () => {
+  var tokens = [1];
+  var p = new EntityPath([...tokens]);
+  assertDeepEqual(p.tokens, tokens);
+});
+
 testSuite.addTest("Initialization fails when path is not a string or array", () => {
   const errorTarget = "requires an EntityPath object, a string, or an array of tokens";
-  assertThrows(() => {
-    var p = new EntityPath(10);
-  }, errorTarget);
   assertThrows(() => {
     var p = new EntityPath(false);
   },errorTarget);
