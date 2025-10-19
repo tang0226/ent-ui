@@ -28,10 +28,12 @@ export class EntUI {
       }
     }
 
-    if (path.tokens.length == 0) {
+    const tokens = path.tokens;
+
+    if (tokens.length == 0) {
       throw new ValueError(`Cannot add Entity to UI: empty path`);
     }
-    if (typeof path.tokens[0] != "string") {
+    if (typeof tokens[0] != "string") {
       throw new TypeError(`Cannot add Entity to UI: first path token {${path.tokens[0]}} is not a string`);
     }
 
@@ -56,8 +58,10 @@ export class EntUI {
       entity = new Entity(entObj);
     }
 
+    const traverseTokens = tokens.slice(0, -1);
+
     // See if we are adding a top-level object
-    if (path.tokens.length == 1) {
+    if (traverseTokens.length == 0) {
       // Seed the entity's path with its string token, then propagate the paths through the hierarchy
       const token = path.tokens[0];
       entity.token = token;
@@ -69,7 +73,7 @@ export class EntUI {
     }
     else {
       // Add entity to some descendant Entity (determined by path)
-      this.getEntity(path).addEntity(entity);
+      this.getEntity(traverseTokens).addEntity(entity, tokens[tokens.length - 1]);
     }
 
     // Link the Entity to this UI
@@ -134,20 +138,20 @@ export class EntUI {
   }
 
 
-  // Recursively extract the temp-state from an entity and its descendants into the `state` prop.
+  // Recursively extract the temp-state from a new entity and its descendants into the `state` prop.
   // When adding an Entity, this step must take place after hierarchy initialization (Entity._updateHierarchy())
   _extractEntityState(entity, stateObj = null) {
 
-    // If entity is top-level, initialize the top-level object in `state`
-    if (!entity.parent) {
-      // Initialize top-level state and set stateObj as a reference
-      this.state[entity.token] = stateObj = {};
-    }
-    else {
-      // If not recursively passed, et the state object by
-      // traversing `state` based on entity's `path`
-      if (!stateObj) {
-        stateObj = this._getStateObj(entity.path);
+    if (stateObj === null) {
+      if (entity.parent) {
+        // Initialize a new branch in the corresponding part of UI's `state` tree
+        const parentState = this._getStateObj(entity.parent.path);
+        if (!parentState.children) parentState.children = {};
+        parentState.children[entity.token] = stateObj = {};
+      }
+      else {
+        // Create a new top-level branch in UI's `state`
+        this.state[entity.token] = stateObj = {};
       }
     }
 
