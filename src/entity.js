@@ -15,7 +15,7 @@ class EntityGetError extends Error {
 
 
 export class Entity {
-  constructor(config = {}, { _parent = null, _token = null } = {}) {
+  constructor(config = {}, { _parent = null, _token = null, _updateHierarchy = true } = {}) {
     // Path properties
     this.path = new EntityPath();
     this.parent = _parent;
@@ -133,7 +133,7 @@ export class Entity {
 
     // Once entities have been added, check if this Entity is top-level.
     // If so, initialize its path and those of its descendants.
-    if (!this.parent) {
+    if (!this.parent && _updateHierarchy) {
       this._updateHierarchy();
     }
 
@@ -212,6 +212,7 @@ export class Entity {
     }
 
     // Recursively update hierarchy if called for
+    // (only skipped during Entity constructor, since it only needs to be called once in the parent Entity)
     if (_updateHierarchy) {
       entity._updateHierarchy();
     }
@@ -227,6 +228,8 @@ export class Entity {
     return entity;
   }
 
+  // Gets the entity at a certain path (string, array of tokens, EntityPath instance);
+  // can also use parent operator here
   getEntity(path) {
     // Validate path and initialize as an EntityPath instance
     if (path === undefined) throw new EntityGetError(this, "no path provided");
@@ -276,7 +279,8 @@ export class Entity {
     return entity;
   }
   
-
+  // Like Array.forEach(), but for an Entity's children.
+  // Function is bound to the calling Entity when possible
   forEachChild(func) {
     if (!isArrowFunction(func)) {
       func = func.bind(this);
