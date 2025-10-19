@@ -15,16 +15,19 @@ import {
 } from "./framework/assert.js";
 
 // For checking Entity hierarchy
-function assertParentChild(parent, child) {
+export function assertParentChild(parent, child) {
   assertEqual(parent.children[child.token], child, "parent.children contain a match with child's token");
   assertDeepEqual(child.path.tokens, [...parent.path.tokens, child.token], "child tokens incorrect");
 }
 
 // Check hierarchy for root and all descendants
-function assertValidHierarchy(entity, currTokens = null) {
+export function assertValidHierarchy(entity, currTokens = null) {
   if (currTokens === null) {
     currTokens = entity.path.tokens;
   }
+
+  if (!entity.children) return;
+
   entity.forEachChild(function(c, token) {
     const newTokens = [...currTokens, c.token];
 
@@ -33,10 +36,8 @@ function assertValidHierarchy(entity, currTokens = null) {
     assertDeepEqual(c.path.tokens, newTokens, "child's path incorrect");
     assertEqual(c.parent, this, "child's parent reference incorrect");
 
-    // Recursive call with the current path if the child has subsequent children
-    if (c.children) {
-      assertValidHierarchy(c, newTokens);
-    }
+    // Recursive call with the current path
+    assertValidHierarchy(c, newTokens);
   });
 }
 
