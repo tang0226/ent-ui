@@ -12,19 +12,21 @@ export class EntUI {
   }
 
 
-  // Can add a top-level Entity to the UI or a sub-Entity to an existing Entity, depending on `path`
-  // entObj can be either a config object or an Entity instance
-  addEntity(entObj, path) {
+  // * Can add a top-level Entity to the UI or a sub-Entity to an existing Entity, depending on the path params
+  // * entObj can be either a config object or an Entity instance
+  // * `path` can be the full path of the new Entity (including the new token),
+  //   OR it can be the path fo the Entity to add to, and `newToken` can be the token of the new Entity.
+  //   Either way, `path` and `newToken` are joined, and the last token in the combined path is taken as the new Entity's
+  addEntity(entObj, path, newToken = null) {
     if (entObj === undefined) throw new Error("Cannot add Entity to UI: Entity instance / config object not provided");
     if (path === undefined) throw new Error("Cannot add Entity to UI: no path provided");
 
-    // Path validation; KEEP IN FRONT OF `entObj` VALIDATION
-    if (!(path instanceof EntityPath)) {
-      if (typeof path == "string" || Array.isArray(path)) {
+    if (newToken !== null) {
+      path = EntityPath.join(path, newToken);
+    }
+    else {
+      if (!(path instanceof EntityPath)) {
         path = new EntityPath(path);
-      }
-      else {
-        throw new TypeError(`Cannot add Entity to UI: path {${path}} not an EntityPath, string, or array`);
       }
     }
 
@@ -55,15 +57,18 @@ export class EntUI {
         throw new TypeError(`Cannot add Entity to UI at path "${path.toString()}": input is not an object or Entity instance`);
       }
 
-      entity = new Entity(entObj);
+      // Initialize the new ent, but will update hierarchy later, after token is set
+      entity = new Entity(entObj, { _updateHierarchy: false });
     }
 
+    // Tokens that reach the entity to which we're adding (empty if we're adding a top-level ent)
     const traverseTokens = tokens.slice(0, -1);
+    // final token (token to give `entObj` when adding)
+    const token = tokens[tokens.length - 1];
 
-    // See if we are adding a top-level object
+    // See if we are adding a top-level entity
     if (traverseTokens.length == 0) {
       // Seed the entity's path with its string token, then propagate the paths through the hierarchy
-      const token = path.tokens[0];
       entity.token = token;
       entity.path = new EntityPath([token]);
       entity._updateHierarchy();
@@ -72,8 +77,9 @@ export class EntUI {
       this.entities[token] = entity;
     }
     else {
-      // Add entity to some descendant Entity (determined by path)
-      this.getEntity(traverseTokens).addEntity(entity, tokens[tokens.length - 1]);
+      // Add `entity` to its correct parent entity
+      // (Entity.addEntity() initializes `entity`'s hierarchy)
+      this.getEntity(traverseTokens).addEntity(entity, token);
     }
 
     // Link the Entity to this UI
