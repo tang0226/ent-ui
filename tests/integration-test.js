@@ -22,6 +22,10 @@ import {
   assertValidHierarchy,
 } from "./entity-test.js";
 
+import {
+  assertEntityLinkedToUI
+} from "./ent-ui-test.js";
+
 const testSuite = new TestSuite("Entity-EntUI integration");
 
 testSuite.addTest("addEntity fails if entity to add has a non-matching UI", () => {
@@ -32,6 +36,13 @@ testSuite.addTest("addEntity fails if entity to add has a non-matching UI", () =
   assertThrows(() => {
     e.addEntity(e2, "child");
   }, "is already in another UI");
+});
+
+testSuite.addTest("addEntity updates new Entity's UI info if the parent Entity has a UI", () => {
+  var ui = new EntUI();
+  ui.addEntity(new Entity({ children: {} }), "entity");
+  ui.getEntity("entity").addEntity({}, "child");
+  assertEntityLinkedToUI(ui.getEntity("entity.child"), ui);
 });
 
 testSuite.runTests();
