@@ -21,8 +21,9 @@ export class TestSuite {
     this.passed = 0;
     this.failed = 0;
     this.testCount = this.tests.length;
+    this.failures = [];
 
-    console.log(`Running test suite: ${this.name}`);
+    console.groupCollapsed(`Running test suite: ${this.name}`);
 
     for (const test of this.tests) {
       try {
@@ -31,11 +32,15 @@ export class TestSuite {
         this.passed++;
       }
       catch (error) {
-        console.log(`❌ ${test.name}:`);
+        let msg = `❌ ${test.name}:`
+        console.log(msg);
         console.error(error);
+        this.failures.push({ msg, error });
         this.failed++;
       }
     }
+
+    console.groupEnd();
 
     if (this.passed == this.testCount) {
       console.log(`✅ all tests (${this.passed}/${this.testCount}) passed\n `);
