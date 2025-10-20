@@ -20,7 +20,7 @@ import {
 import {
   assertParentChild,
   assertValidHierarchy,
-} from "./test-entity.js";
+} from "./entity-test.js";
 
 
 export function assertEntityLinkedToUI(entity, ui, msg = "") {
