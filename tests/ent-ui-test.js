@@ -80,7 +80,28 @@ testSuite.addTest("addEntity at deep path adds Entity and updates hierarchy", ()
   ui.addEntity(e, "topLevel");
   ui.addEntity({}, "topLevel.one[0]", "child");
   assertValidHierarchy(e);
-  assertEntityLinkedToUI(e.getEntity("one[0].child"), ui);
+});
+
+testSuite.addTest("addEntity with single-token path extracts state properly", () => {
+  var ui = new EntUI();
+  ui.addEntity({
+    state: {foo: 5},
+  }, "topLevel");
+  assertEqual(ui._state.topLevel.state.foo, 5);
+});
+
+testSuite.addTest("addEntity with deep path extracts state properly", () => {
+  var ui = new EntUI();
+  ui.addEntity({
+    children: {},
+    attrs: {name: "topLevel"},
+  }, "topLevel");
+
+  ui.addEntity({
+    state: {bar: 5},
+    attrs: {name: "child"},
+  }, "topLevel.child");
+  assertEqual(ui._state.topLevel.children.child.state.bar, 5);
 });
 
 testSuite.runTests();

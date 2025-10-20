@@ -84,7 +84,8 @@ export class EntUI {
     else {
       // Add `entity` to its correct parent entity
       // (Entity.addEntity() initializes `entity`'s hierarchy)
-      this.getEntity(traverseTokens).addEntity(entity, token);
+      // Avoid double UI linking / state extraction by setting the _linkUI option to false
+      this.getEntity(traverseTokens).addEntity(entity, token, { _linkUI: false });
     }
 
     // Link the Entity to this UI

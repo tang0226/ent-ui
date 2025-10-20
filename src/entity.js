@@ -191,7 +191,7 @@ export class Entity {
   }
 
   // entObj can be either a config object or an Entity instance
-  addEntity(entObj, token, { _updateHierarchy = true } = {}) {
+  addEntity(entObj, token, { _updateHierarchy = true, _linkUI = true } = {}) {
     if (this._type == "leaf") {
       throw new TypeError("Cannot add Entity to leaf Entity");
     }
@@ -259,7 +259,7 @@ export class Entity {
     }
 
     // Link the new Entity to self's UI object, if applicable
-    if (this._ui) {
+    if (this._ui && _linkUI) {
       this._ui._linkEntity(entity);
       this._ui._extractEntityState(entity);
     }
