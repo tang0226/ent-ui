@@ -239,12 +239,6 @@ export class Entity {
       entity = new Entity(entObj, { _parent: this, _token: token });
     }
 
-    // Recursively update hierarchy if called for
-    // (only skipped during Entity constructor, since it only needs to be called once in the parent Entity)
-    if (_updateHierarchy) {
-      entity._updateHierarchy();
-    }
-
     // Add the entity to the children array / object
     if (this._type == "group") {
       this._children[token] = entity;
@@ -253,8 +247,17 @@ export class Entity {
       this._children.splice(token, 0, entity);
     }
 
-    // Link the new Entity to self's UI object, if applicable
+    // Recursively update hierarchy if called for
+    // (only skipped during Entity constructor, since it only needs to be called once in the parent Entity)
+    if (_updateHierarchy) {
+      entity._updateHierarchy();
+    }
 
+    // Link the new Entity to self's UI object, if applicable
+    if (this._ui) {
+      this._ui._linkEntity(entity);
+      this._ui._extractEntityState(entity);
+    }
 
     return entity;
   }
