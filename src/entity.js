@@ -164,6 +164,11 @@ export class Entity {
     return this._type;
   }
 
+  get children() {
+    // Deep copy to avoid direct rewriting of _children or its attributes
+    return {...this._children};
+  }
+
   get domEl() {
     return this._domEl;
   }

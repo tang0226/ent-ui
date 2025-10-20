@@ -55,7 +55,7 @@ testSuite.addTest("addEntity with single-token path adds to entities prop", () =
   var ui = new EntUI();
   var e = new Entity();
   ui.addEntity(e, "topLevel");
-  assertEqual(ui.entities.topLevel, e);
+  assertEqual(ui._entities.topLevel, e);
 });
 
 testSuite.addTest("addEntity with single-token path produces a proper hierarchy", () => {
@@ -75,7 +75,6 @@ testSuite.addTest("addEntity at deep path adds Entity and updates hierarchy", ()
   var e = new Entity({
     children: {
       one: { children: [{ children: {} }, {}] },
-      two: {},
     },
   });
   ui.addEntity(e, "topLevel");

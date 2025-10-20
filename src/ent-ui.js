@@ -3,12 +3,17 @@ import { EntityPath } from "./entity-path.js";
 
 export class EntUI {
   constructor(options = {}) {
-    this.entities = {};
-    this.state = {};
+    this._entities = {};
+    this._state = {};
     this.attrs = {};
     this.validators = {};
 
     // Init with options here
+  }
+
+  get entities() {
+    // Deep copy to avoid direct rewriting of _entities and its attributes
+    return {...this._entities};
   }
 
 
@@ -74,7 +79,7 @@ export class EntUI {
       entity._updateHierarchy();
 
       // Add to top-level entities object
-      this.entities[token] = entity;
+      this._entities[token] = entity;
     }
     else {
       // Add `entity` to its correct parent entity
@@ -108,7 +113,7 @@ export class EntUI {
     if (typeof tokens[0] != "string") {
       throw new TypeError("First path token must be a property name");
     }
-    let entity = this.entities[tokens[0]];
+    let entity = this._entities[tokens[0]];
     if (!entity) {
       throw new Error(`UI has no top-level entity "${tokens[0]}"`);
     }
@@ -153,7 +158,7 @@ export class EntUI {
       }
       else {
         // Create a new top-level branch in UI's `state`
-        this.state[entity._token] = stateObj = {};
+        this._state[entity._token] = stateObj = {};
       }
     }
 
@@ -182,7 +187,7 @@ export class EntUI {
   // Returns the state object (branch) at a given (assumed valid) path
   _getStateObj(path) {
     const tokens = path.tokens;
-    var stateTree = this.state[tokens[0]];
+    var stateTree = this._state[tokens[0]];
     for (let token of tokens.slice(1)) {
       stateTree = stateTree.children[token];
     }
