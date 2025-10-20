@@ -477,6 +477,18 @@ testSuite.addTest("addEntity fails when a non-object is passed", () => {
   }, "Entity to add is not an object");
 });
 
+testSuite.addTest("addEntity fails if entity to add has a non-matching UI", () => {
+  var e = new Entity({
+    children: {},
+  });
+  var e2 = new Entity();
+  // Set mock _ui value
+  e2._ui = {};
+  assertThrows(() => {
+    e.addEntity(e2, "child");
+  }, "is already in another UI");
+});
+
 testSuite.addTest("Hierarchy is valid with deep nesting", () => {
   assertValidHierarchy(new Entity({
     children: [

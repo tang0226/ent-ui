@@ -217,6 +217,10 @@ export class Entity {
     var entity;
     if (entObj instanceof Entity) {
       entity = entObj;
+      // Check if the entity already has a UI that doesn't match self's
+      if (entity._ui && entity._ui !== this._ui) {
+        throw new Error(`Cannot add entity to ${this._type} "${this._path.toString()}": Entity is already in another UI`);
+      }
       if (entity._parent) {
         throw new Error(`Cannot add entity to ${this._type} "${this._path.toString()}": Entity already has a parent`);
       }
@@ -248,6 +252,9 @@ export class Entity {
     if (this._type == "list") {
       this._children.splice(token, 0, entity);
     }
+
+    // Link the new Entity to self's UI object, if applicable
+
 
     return entity;
   }
