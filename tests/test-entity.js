@@ -16,25 +16,25 @@ import {
 
 // For checking Entity hierarchy
 export function assertParentChild(parent, child) {
-  assertEqual(parent.children[child.token], child, "parent.children contain a match with child's token");
-  assertDeepEqual(child.path.tokens, [...parent.path.tokens, child.token], "child tokens incorrect");
+  assertEqual(parent._children[child._token], child, "parent._children contain a match with child's token");
+  assertDeepEqual(child._path.tokens, [...parent._path.tokens, child._token], "child tokens incorrect");
 }
 
 // Check hierarchy for root and all descendants
 export function assertValidHierarchy(entity, currTokens = null) {
   if (currTokens === null) {
-    currTokens = entity.path.tokens;
+    currTokens = entity._path.tokens;
   }
 
-  if (!entity.children) return;
+  if (!entity._children) return;
 
   entity.forEachChild(function(c, token) {
-    const newTokens = [...currTokens, c.token];
+    const newTokens = [...currTokens, c._token];
 
     // Assert the child's token, path, and parent props
-    assertEqual(c.token, token, "child's token incorrect");
-    assertDeepEqual(c.path.tokens, newTokens, "child's path incorrect");
-    assertEqual(c.parent, this, "child's parent reference incorrect");
+    assertEqual(c._token, token, "child's token incorrect");
+    assertDeepEqual(c._path.tokens, newTokens, "child's path incorrect");
+    assertEqual(c._parent, this, "child's parent reference incorrect");
 
     // Recursive call with the current path
     assertValidHierarchy(c, newTokens);
@@ -293,21 +293,21 @@ testSuite.addTest("setDomEl() fails when domEl param is not an Element", () => {
 // Constructor
 testSuite.addTest("Entity initialized with empty config object is of type \"leaf\"", () => {
   var e = new Entity({});
-  assertEqual(e.type, "leaf");
+  assertEqual(e._type, "leaf");
 });
 
 testSuite.addTest("Entity initialized with empty children object is of type \"group\"", () => {
   var e = new Entity({
     children: {},
   });
-  assertEqual(e.type, "group");
+  assertEqual(e._type, "group");
 });
 
 testSuite.addTest("Entity initialized with empty children array is of type \"list\"", () => {
   var e = new Entity({
     children: [],
   });
-  assertEqual(e.type, "list");
+  assertEqual(e._type, "list");
 });
 
 testSuite.addTest("Group Entity initialized with single child entity has correct hierarchy", () => {
@@ -316,14 +316,14 @@ testSuite.addTest("Group Entity initialized with single child entity has correct
       child: {},
     },
   });
-  assertParentChild(e, e.children.child);
+  assertParentChild(e, e._children.child);
 });
 
 testSuite.addTest("List Entity initialized with single child entity has correct hierarchy", () => {
   var e = new Entity({
     children: [{}],
   });
-  assertParentChild(e, e.children[0]);
+  assertParentChild(e, e._children[0]);
 });
 
 // forEachChild()
@@ -338,9 +338,9 @@ testSuite.addTest("forEachChild loops through each direct child (group)", () => 
   e.forEachChild((c, token) => {
     c.lState.name = token;
   });
-  assertEqual(e.children.one.lState.name, "one");
-  assertEqual(e.children.two.lState.name, "two");
-  assertEqual(e.children.three.lState.name, "three");
+  assertEqual(e._children.one.lState.name, "one");
+  assertEqual(e._children.two.lState.name, "two");
+  assertEqual(e._children.three.lState.name, "three");
 });
 
 testSuite.addTest("forEachChild loops through each direct child (list)", () => {
@@ -350,9 +350,9 @@ testSuite.addTest("forEachChild loops through each direct child (list)", () => {
   e.forEachChild((c, token) => {
     c.lState.index = token;
   });
-  assertEqual(e.children[0].lState.index, 0);
-  assertEqual(e.children[1].lState.index, 1);
-  assertEqual(e.children[2].lState.index, 2);
+  assertEqual(e._children[0].lState.index, 0);
+  assertEqual(e._children[1].lState.index, 1);
+  assertEqual(e._children[2].lState.index, 2);
 });
 
 testSuite.addTest("forEachChild fails on non-parent Entity", () => {
@@ -384,7 +384,7 @@ testSuite.addTest("addEntity provides default token when adding to list", () => 
     children: [{}],
   });
   e.addEntity({ lState: { a: 2 } }); // no index token provided; addEntity should by default add this Ent to the end of the list
-  assertEqual(e.children[1].lState.a, 2, "lState of added Entity not set");
+  assertEqual(e._children[1].lState.a, 2, "lState of added Entity not set");
 });
 
 testSuite.addTest("addEntity inserts child at specified index in list Entity", () => {
@@ -396,7 +396,7 @@ testSuite.addTest("addEntity inserts child at specified index in list Entity", (
   });
   e.addEntity(child, 2); // Specify the index
   // Check that the child is at the specified index
-  assertEqual(e.children[2], child, "child not inserted at correct index");
+  assertEqual(e._children[2], child, "child not inserted at correct index");
 });
 
 testSuite.addTest("addEntity works when adding grandchildren", () => {
@@ -404,7 +404,7 @@ testSuite.addTest("addEntity works when adding grandchildren", () => {
     children: {},
   });
   e.addEntity(new Entity({ children: [] }), "child");
-  e.children.child.addEntity({});
+  e._children.child.addEntity({});
   assertValidHierarchy(e);
 });
 
@@ -464,7 +464,7 @@ testSuite.addTest("addEntity fails when Entity to add already has a parent", () 
     children: {},
   });
   assertThrows(() => {
-    e2.addEntity(e1.children.child, "child");
+    e2.addEntity(e1._children.child, "child");
   }, "Entity already has a parent");
 });
 
@@ -519,7 +519,7 @@ testSuite.addTest("getEntity succeeds with basic descendant relationship", () =>
     ],
   });
   assertEqual(
-    e.children[1].children.two.children[1],
+    e._children[1]._children.two._children[1],
     e.getEntity("[1].two[1]"),
   );
 });
@@ -536,8 +536,8 @@ testSuite.addTest("getEntity succeeds with parent operator", () => {
     ],
   });
   assertEqual(
-    e.children[0].children.one.children[1],
-    e.children[1].children.two.getEntity("^^[0].one[1]"),
+    e._children[0]._children.one._children[1],
+    e._children[1]._children.two.getEntity("^^[0].one[1]"),
   );
 });
 
@@ -564,7 +564,7 @@ testSuite.addTest("getEntity fails with excess parent operator", () => {
     ],
   });
   assertThrows(() => {
-    e.children[0].children[0].getEntity("^^^");
+    e._children[0]._children[0].getEntity("^^^");
   }, "parent operator error at index 2");
 });
 

@@ -24,8 +24,8 @@ import {
 
 
 export function assertEntityLinkedToUI(entity, ui, msg = "") {
-  assertEqual(entity.ui, ui, msg || `Entity ${entity.path.toString()} not linked to ui`);
-  if (entity.children) {
+  assertEqual(entity._ui, ui, msg || `Entity ${entity._path.toString()} not linked to ui`);
+  if (entity._children) {
     entity.forEachChild((c) => {
       assertEntityLinkedToUI(c, ui, msg);
     });

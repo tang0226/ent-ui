@@ -9,7 +9,7 @@ class InitError extends Error {
 
 class EntityGetError extends Error {
   constructor(src, msg) {
-    super(`getEntity() from Entity "${src.path.toString()}": ${msg}`);
+    super(`getEntity() from Entity "${src._path.toString()}": ${msg}`);
   }
 }
 
@@ -17,15 +17,15 @@ class EntityGetError extends Error {
 export class Entity {
   constructor(config = {}, { _parent = null, _token = null, _updateHierarchy = true } = {}) {
     // Path properties
-    this.path = new EntityPath();
-    this.parent = _parent;
-    this.token = _token;
+    this._path = new EntityPath();
+    this._parent = _parent;
+    this._token = _token;
 
     // Element
-    this.domEl = config.domEl || null;
+    this._domEl = config.domEl || null;
     if (
-      this.domEl !== null && this.domEl !== undefined &&
-      !(this.domEl instanceof Element)
+      this._domEl !== null && this._domEl !== undefined &&
+      !(this._domEl instanceof Element)
     ) throw new InitError("domEl property is not a DOM element");
 
     // Attributes
@@ -88,7 +88,7 @@ export class Entity {
 
     // Event listeners
     this.events = config.events || {};
-    if (this.domEl) {
+    if (this._domEl) {
       if (typeof this.events !== "object") {
         throw new InitError("events property is not an object");
       }
@@ -103,29 +103,29 @@ export class Entity {
     const children = config.children;
 
     // Default to a bottom-level entity if no structure is defined
-    this.type = "leaf";
+    this._type = "leaf";
 
     if (children && typeof children == "object") {
       // Determine Entity type and initialize the children prop
       if (Array.isArray(children)) {
-        this.type = "list";
-        this.children = [];
+        this._type = "list";
+        this._children = [];
       }
       else {
-        this.type = "group";
-        this.children = {};
+        this._type = "group";
+        this._children = {};
       }
     }
 
 
     // Add children
-    if (this.type == "group") {
+    if (this._type == "group") {
       for (const [key, ent] of Object.entries(children)) {
         this.addEntity(ent, key, { _updateHierarchy: false });
       }
     }
 
-    if (this.type == "list") {
+    if (this._type == "list") {
       children.forEach((ent, index) => {
         this.addEntity(ent, index, { _updateHierarchy: false });
       });
@@ -133,7 +133,7 @@ export class Entity {
 
     // Once entities have been added, check if this Entity is top-level.
     // If so, initialize its path and those of its descendants.
-    if (!this.parent && _updateHierarchy) {
+    if (!this._parent && _updateHierarchy) {
       this._updateHierarchy();
     }
 
@@ -147,29 +147,53 @@ export class Entity {
   // END CONSTRUCTOR
   // -----------------------------------------------------------
 
+  // Getters
+  get path() {
+    return new EntityPath(this.path);
+  }
+
+  get parent() {
+    return this._parent;
+  }
+  
+  get token() {
+    return this._token;
+  }
+  
+  get type() {
+    return this._type;
+  }
+
+  get domEl() {
+    return this._domEl;
+  }
+
+  get ui() {
+    return this._ui;
+  }
 
   // Links the Entity to a DOM element; should only be run once, and only if no DOM element was passed at initialization
   setDomEl(domEl) {
-    if (this.domEl) {
-      throw new Error(`Cannot set DOM element of Entity "${this.path.toString()}": Entity already has a DOM element`);
+    if (this._domEl) {
+      throw new Error(`Cannot set DOM element of Entity "${this._path.toString()}": Entity already has a DOM element`);
     }
     if (!(domEl instanceof Element)) {
-      throw new TypeError(`Cannot set DOM element of Entity "${this.path.toString()}": ${domEl} is not an Element`);
+      throw new TypeError(`Cannot set DOM element of Entity "${this._path.toString()}": ${domEl} is not an Element`);
     }
 
-    this.domEl = domEl;
+    this._domEl = domEl;
     this._initEventListeners();
   }
 
   // entObj can be either a config object or an Entity instance
   addEntity(entObj, token, { _updateHierarchy = true } = {}) {
-    if (this.type == "leaf") {
+    if (this._type == "leaf") {
       throw new TypeError("Cannot add Entity to leaf Entity");
     }
 
     if (token === undefined) {
-      if (this.type === "list") {
-        token = this.children.length;
+      if (this._type === "list") {
+        token = this._children.length;
       }
       else {
         throw new Error("Cannot add Entity to group Entity: no token provided");
@@ -177,13 +201,13 @@ export class Entity {
     }
 
     // Token validation
-    if (this.type == "group") {
-      if (this.children[token]) {
-        throw new ReferenceError(`Error adding child ${token} to group "${this.path.toString()}": already exists`);
+    if (this._type == "group") {
+      if (this._children[token]) {
+        throw new ReferenceError(`Error adding child ${token} to group "${this._path.toString()}": already exists`);
       }
     }
 
-    if (this.type == "list") {
+    if (this._type == "list") {
       if (typeof token != "number") {
         throw new TypeError("Token to add an Entity must be a number when adding to a list");
       }
@@ -193,17 +217,17 @@ export class Entity {
     var entity;
     if (entObj instanceof Entity) {
       entity = entObj;
-      if (entity.parent) {
-        throw new Error(`Cannot add entity to ${this.type} "${this.path.toString()}": Entity already has a parent`);
+      if (entity._parent) {
+        throw new Error(`Cannot add entity to ${this._type} "${this._path.toString()}": Entity already has a parent`);
       }
 
       // Set this Entity's parent and token props
-      entity.parent = this;
-      entity.token = token;
+      entity._parent = this;
+      entity._token = token;
     }
     else {
       if (typeof entObj != "object") {
-        throw new TypeError(`Cannot add Entity to ${this.type} "${this.path.toString()}": Entity to add is not an object or Entity`);
+        throw new TypeError(`Cannot add Entity to ${this._type} "${this._path.toString()}": Entity to add is not an object or Entity`);
       }
 
       // If the entity is a config object, initialize it,
@@ -218,11 +242,11 @@ export class Entity {
     }
 
     // Add the entity to the children array / object
-    if (this.type == "group") {
-      this.children[token] = entity;
+    if (this._type == "group") {
+      this._children[token] = entity;
     }
-    if (this.type == "list") {
-      this.children.splice(token, 0, entity);
+    if (this._type == "list") {
+      this._children.splice(token, 0, entity);
     }
 
     return entity;
@@ -253,10 +277,10 @@ export class Entity {
     if (isValidParentOperator(tokens[0])) {
       // Traverse up the tree according to the number of ^
       for (let j = 0; j < tokens[0].length; j++) {
-        if (!entity.parent) {
-          throw new EntityGetError(this, `parent operator error at index ${j}: Entity "${entity.path.toString()}" has no parent`);
+        if (!entity._parent) {
+          throw new EntityGetError(this, `parent operator error at index ${j}: Entity "${entity._path.toString()}" has no parent`);
         }
-        entity = entity.parent;
+        entity = entity._parent;
       }
       
       // Start descending from the second token
@@ -264,15 +288,15 @@ export class Entity {
     }
 
     for (; i < tokens.length; i++) {
-      if (!entity.children) {
-        throw new EntityGetError(this, `Entity "${entity.path.toString()}" has no children`);
+      if (!entity._children) {
+        throw new EntityGetError(this, `Entity "${entity._path.toString()}" has no children`);
       }
 
       const token = tokens[i];
       let prevEntity = entity;
-      entity = entity.children[token];
+      entity = entity._children[token];
       if (entity === undefined) {
-        throw new EntityGetError(this, `Entity "${prevEntity.path.toString()}" has no child with token "${token}"`);
+        throw new EntityGetError(this, `Entity "${prevEntity._path.toString()}" has no child with token "${token}"`);
       }
     }
 
@@ -286,25 +310,25 @@ export class Entity {
       func = func.bind(this);
     }
 
-    if (this.type == "group") {
-      for (const [token, child] of Object.entries(this.children)) {
+    if (this._type == "group") {
+      for (const [token, child] of Object.entries(this._children)) {
         func(child, token);
       }
       return;
     }
-    if (this.type == "list") {
-      this.children.forEach((child, index) => {
+    if (this._type == "list") {
+      this._children.forEach((child, index) => {
         func(child, index);
       });
       return;
     }
-    throw new TypeError(`Cannot call forEachChild on entity "${this.path.toString()}": not a group or list`);
+    throw new TypeError(`Cannot call forEachChild on entity "${this._path.toString()}": not a group or list`);
   }
 
 
   // Attaches all events to DOM element if possible
   _initEventListeners() {
-    if (this.domEl) {
+    if (this._domEl) {
       for (const [event, handler] of Object.entries(this.events)) {
         if (typeof handler != "function") {
           throw new InitError(`${event} event handler must be a function`);
@@ -312,7 +336,7 @@ export class Entity {
         if (isArrowFunction(handler)) {
           throw new InitError(`${event} event handler cannot be an arrow function`);
         }
-        this.domEl.addEventListener(event, handler.bind(this));
+        this._domEl.addEventListener(event, handler.bind(this));
       }
     }
   }
@@ -321,11 +345,11 @@ export class Entity {
   // Recursively updates paths for self and all descendants;
   // For use internally and in other core classes
   _updateHierarchy() {
-    if (this.parent) {
-      this.path = EntityPath.join(this.parent.path, this.token);
+    if (this._parent) {
+      this._path = EntityPath.join(this._parent._path, this._token);
     }
 
-    if (this.children) {
+    if (this._children) {
       this.forEachChild((c) => {
         c._updateHierarchy();
       });

@@ -45,10 +45,10 @@ export class EntUI {
       entity = entObj;
 
       
-      if (entity.ui) {
+      if (entity._ui) {
         throw new Error(`Cannot add entity to UI at path "${path.toString()}": Entity is already attached to a UI`);
       }
-      if (entity.parent) {
+      if (entity._parent) {
         throw new Error(`Cannot add entity to UI at path "${path.toString()}": Entity already has a parent`);
       }
     }
@@ -69,8 +69,8 @@ export class EntUI {
     // See if we are adding a top-level entity
     if (traverseTokens.length == 0) {
       // Seed the entity's path with its string token, then propagate the paths through the hierarchy
-      entity.token = token;
-      entity.path = new EntityPath([token]);
+      entity._token = token;
+      entity._path = new EntityPath([token]);
       entity._updateHierarchy();
 
       // Add to top-level entities object
@@ -114,17 +114,13 @@ export class EntUI {
     }
 
     for (const token of tokens.slice(1)) {
-      if (!entity.children) {
-        throw new Error(`Entity "${entity.path.toString()}" has no children`);
-      }
-      // Check for mismatching token type
-      if (entity.type == "list" && typeof token != "number") {
-        throw new TypeError(`Invalid token: accessing Entity of list "${entity.path.toString()}" requires a number; {${token}} provided instead`);
+      if (!entity._children) {
+        throw new Error(`Entity "${entity._path.toString()}" has no children`);
       }
 
-      let nextEntity = entity.children[token];
+      let nextEntity = entity._children[token];
       if (!nextEntity) {
-        throw new Error(`Entity "${entity.path.toString()}" has no child {${token}}`);
+        throw new Error(`Entity "${entity._path.toString()}" has no child {${token}}`);
       }
       entity = nextEntity;
     }
@@ -135,8 +131,8 @@ export class EntUI {
 
   // Recursively adds the `ui` prop to an entity and all its descendants
   _linkEntity(entity) {
-    entity.ui = this;
-    if (entity.children) {
+    entity._ui = this;
+    if (entity._children) {
       entity.forEachChild((c) => {
         this._linkEntity(c);
       });
@@ -149,15 +145,15 @@ export class EntUI {
   _extractEntityState(entity, stateObj = null) {
 
     if (stateObj === null) {
-      if (entity.parent) {
+      if (entity._parent) {
         // Initialize a new branch in the corresponding part of UI's `state` tree
-        const parentState = this._getStateObj(entity.parent.path);
+        const parentState = this._getStateObj(entity._parent._path);
         if (!parentState.children) parentState.children = {};
-        parentState.children[entity.token] = stateObj = {};
+        parentState.children[entity._token] = stateObj = {};
       }
       else {
         // Create a new top-level branch in UI's `state`
-        this.state[entity.token] = stateObj = {};
+        this.state[entity._token] = stateObj = {};
       }
     }
 
@@ -169,8 +165,8 @@ export class EntUI {
       entity.state = null;
     }
 
-    if (entity.children) {
-      stateObj.children = entity.type == "list" ? [] : {};
+    if (entity._children) {
+      stateObj.children = entity._type == "list" ? [] : {};
 
       entity.forEachChild((c, token) => {
         stateObj.children[token] = {};
