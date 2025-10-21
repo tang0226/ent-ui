@@ -124,4 +124,25 @@ testSuite.addTest("addEntity treats final index token as traversal token unless 
   assertEqual(ui._entities.entity._children[0].lState, "outer");
 });
 
+testSuite.addTest("addEntity fails when no entObj is passed", () => {
+  var ui = new EntUI();
+  assertThrows(() => {
+    ui.addEntity();
+  }, "Entity instance / config object not provided");
+});
+
+testSuite.addTest("addEntity fails when no path is passed", () => {
+  var ui = new EntUI();
+  assertThrows(() => {
+    ui.addEntity({});
+  }, "no path provided");
+});
+
+testSuite.addTest("addEntity fails when empty path is passed", () => {
+  var ui = new EntUI();
+  assertThrows(() => {
+    ui.addEntity({}, []);
+  }, "empty path");
+});
+
 testSuite.runTests();

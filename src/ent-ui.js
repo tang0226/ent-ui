@@ -38,7 +38,7 @@ export class EntUI {
     const tokens = path.tokens;
 
     if (tokens.length == 0) {
-      throw new ValueError(`Cannot add Entity to UI: empty path`);
+      throw new Error(`Cannot add Entity to UI: empty path`);
     }
     if (typeof tokens[0] != "string") {
       throw new TypeError(`Cannot add Entity to UI: first path token {${path.tokens[0]}} is not a string`);
