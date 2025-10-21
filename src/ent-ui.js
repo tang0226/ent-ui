@@ -100,11 +100,11 @@ export class EntUI {
 
 
   getEntity(path) {
-    let tokens = path;
+    var tokens = path;
 
     // Initialize tokens and validate path type
     if (path instanceof EntityPath) {
-      tokens = EntityPath.tokens;
+      tokens = path.tokens;
     }
     else if (typeof path == "string") {
       tokens = EntityPath.tokenize(path);
@@ -117,7 +117,8 @@ export class EntUI {
     if (typeof tokens[0] != "string") {
       throw new TypeError("First path token must be a property name");
     }
-    let entity = this._entities[tokens[0]];
+
+    var entity = this._entities[tokens[0]];
     if (!entity) {
       throw new Error(`UI has no top-level entity "${tokens[0]}"`);
     }
@@ -129,7 +130,7 @@ export class EntUI {
 
       let nextEntity = entity._children[token];
       if (!nextEntity) {
-        throw new Error(`Entity "${entity._path.toString()}" has no child {${token}}`);
+        throw new Error(`Entity "${entity._path.toString()}" has no child "${token}"`);
       }
       entity = nextEntity;
     }

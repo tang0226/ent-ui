@@ -180,4 +180,100 @@ testSuite.addTest("addEntity fails when Entity is not an object or an Entity ins
   }, "input is not an object or Entity instance");
 });
 
+// getEntity()
+testSuite.addTest("getEntity succeeds on single-token path", () => {
+  var ui = new EntUI();
+  ui.addEntity({
+    lState: { foo: 10 }
+  }, "topLevel");
+  assertEqual(ui.getEntity("topLevel").lState.foo, 10);
+});
+
+testSuite.addTest("getEntity succeeds on deep path", () => {
+  var ui = new EntUI();
+  ui.addEntity({
+    children: {
+      child1: {},
+      child2: {
+        children: [
+          {},
+          {
+            children: [{}, {}],
+          }
+        ],
+      },
+    },
+  }, "topLevel");
+  var e = ui._entities.topLevel._children.child2._children[1]._children[0];
+  assertEqual(ui.getEntity("topLevel.child2[1][0]"), e);
+});
+
+testSuite.addTest("getEntity succeeds with multiple path types", () => {
+  var ui = new EntUI();
+  ui.addEntity({
+    children: {
+      child1: {},
+      child2: {
+        children: [
+          {},
+          {
+            children: [{}, {}],
+          }
+        ],
+      },
+    },
+  }, "topLevel");
+  var e = ui._entities.topLevel._children.child2._children[1]._children[0];
+  assertEqual(ui.getEntity(new EntityPath("topLevel.child2[1][0]")), e);
+  assertEqual(ui.getEntity("topLevel.child2[1][0]"), e);
+  assertEqual(ui.getEntity(["topLevel", "child2", 1, 0]), e);
+});
+
+testSuite.addTest("getEntity fails with invalid path type", () => {
+  var ui = new EntUI();
+  assertThrows(() => {
+    ui.getEntity(null);
+  }, "must be an EntityPath, a string, or an array of tokens");
+});
+
+testSuite.addTest("getEntity fails with non-string first token", () => {
+  var ui = new EntUI();
+  ui.addEntity({}, "topLevel");
+  assertThrows(() => {
+    ui.getEntity("[0].foo");
+  }, "First path token must be a property name");
+});
+
+testSuite.addTest("getEntity fails with non-existent top-level token", () => {
+  var ui = new EntUI();
+  ui.addEntity({}, "topLevel");
+  assertThrows(() => {
+    ui.getEntity("notATopLevelToken");
+  }, "UI has no top-level entity");
+});
+
+testSuite.addTest("getEntity fails when trying to access child of childless Entity", () => {
+  var ui = new EntUI();
+  ui.addEntity({
+    children: [
+      { children: { foo: {} } },
+    ],
+  }, "topLevel");
+  assertThrows(() => {
+    ui.getEntity("topLevel[0].foo.nonExistent");
+  }, /Entity.+has no children/);
+});
+
+testSuite.addTest("getEntity fails when no matching child is found", () => {
+  var ui = new EntUI();
+  ui.addEntity({
+    children: [
+      { children: { foo: {} } },
+    ],
+  }, "topLevel");
+  assertThrows(() => {
+    ui.getEntity("topLevel[0].bar");
+  }, /Entity.+has no child "bar"/);
+});
+
 testSuite.runTests();
