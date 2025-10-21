@@ -105,6 +105,38 @@ testSuite.addTest("addEntity with deep path extracts state properly", () => {
   assertEqual(ui._state.topLevel.children.child.state.bar, 5);
 });
 
+testSuite.addTest("addEntity accepts different path types", () => {
+  var ui = new EntUI();
+  var e = new Entity({
+    children: {
+      one: { children: [{ children: {} }, {}] },
+    },
+  });
+  ui.addEntity(e, "topLevel");
+  ui.addEntity({}, "topLevel.one[0]", "child1");
+  assertTruthy(ui._entities.topLevel._children.one._children[0]._children.child1);
+  ui.addEntity({}, new EntityPath(["topLevel", "one", 0]), "child2");
+  assertTruthy(ui._entities.topLevel._children.one._children[0]._children.child2);
+  ui.addEntity({}, ["topLevel", "one", 0], "child3");
+  assertTruthy(ui._entities.topLevel._children.one._children[0]._children.child3);
+});
+
+testSuite.addTest("addEntity accepts different path/token configurations", () => {
+  var ui = new EntUI();
+  var e = new Entity({
+    children: {
+      one: { children: [{ children: {} }, {}] },
+    },
+  });
+  ui.addEntity(e, "topLevel");
+  // Treat path as path of existing Entity to which we add a new Entity with token "child1"
+  ui.addEntity({}, "topLevel.one[0]", "child1");
+  assertTruthy(ui._entities.topLevel._children.one._children[0]._children.child1);
+  // Treat path as full path of new Entity ("child2" is the new Entity's)
+  ui.addEntity({}, "topLevel.one[0].child2");
+  assertTruthy(ui._entities.topLevel._children.one._children[0]._children.child2);
+});
+
 testSuite.addTest("addEntity treats final index token as traversal token unless otherwise specified", () => {
   var ui = new EntUI();
   ui.addEntity({
@@ -208,7 +240,7 @@ testSuite.addTest("getEntity succeeds on deep path", () => {
   assertEqual(ui.getEntity("topLevel.child2[1][0]"), e);
 });
 
-testSuite.addTest("getEntity succeeds with multiple path types", () => {
+testSuite.addTest("getEntity accepts different path types", () => {
   var ui = new EntUI();
   ui.addEntity({
     children: {
