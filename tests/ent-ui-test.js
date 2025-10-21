@@ -1,3 +1,4 @@
+import { EntityPath } from "../../src/entity-path.js";
 import { Entity } from "../../src/entity.js";
 import { EntUI } from "../../src/ent-ui.js";
 
@@ -36,7 +37,7 @@ export function assertEntityLinkedToUI(entity, ui, msg = "") {
 const testSuite = new TestSuite("EntUI");
 
 // _linkEntity
-testSuite.addTest("_linkEntity adds ui prop to entity and all descendants", () => {
+testSuite.addTest("_linkEntity adds _ui prop to Entity and all descendants", () => {
   const ui = new EntUI();
   const e = new Entity({
     children: {
@@ -143,6 +144,40 @@ testSuite.addTest("addEntity fails when empty path is passed", () => {
   assertThrows(() => {
     ui.addEntity({}, []);
   }, "empty path");
+});
+
+testSuite.addTest("addEntity fails when first path token is not a string", () => {
+  var ui = new EntUI();
+  assertThrows(() => {
+    ui.addEntity({}, new EntityPath([0]));
+  }, /first path token.+is not a string/);
+});
+
+testSuite.addTest("addEntity fails when Entity to add already has a UI", () => {
+  var ui = new EntUI();
+  var ui2 = new EntUI();
+  var ent = new Entity();
+  ui.addEntity(ent, "entity");
+  assertThrows(() => {
+    ui2.addEntity(ent, "entity");
+  }, "Entity is already attached to a UI");
+});
+
+testSuite.addTest("addEntity fails when Entity already has a parent", () => {
+  var ui = new EntUI();
+  var ent = new Entity({
+    children: { child: {} },
+  });
+  assertThrows(() => {
+    ui.addEntity(ent._children.child, "entity");
+  }, "Entity already has a parent");
+});
+
+testSuite.addTest("addEntity fails when Entity is not an object or an Entity instance", () => {
+  var ui = new EntUI();
+  assertThrows(() => {
+    ui.addEntity("not-an-object-or-Entity", "entity");
+  }, "input is not an object or Entity instance");
 });
 
 testSuite.runTests();
