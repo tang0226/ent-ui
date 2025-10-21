@@ -104,4 +104,24 @@ testSuite.addTest("addEntity with deep path extracts state properly", () => {
   assertEqual(ui._state.topLevel.children.child.state.bar, 5);
 });
 
+testSuite.addTest("addEntity treats final index token as traversal token unless otherwise specified", () => {
+  var ui = new EntUI();
+  ui.addEntity({
+    children: [
+      { children: [] }, // inner should end up inside here
+      { children: [] },
+    ],
+  }, "entity");
+
+  // 0 index is part of the path, so EntUI should add the Entity to
+  // the actual Entity "entity[0]"
+  ui.addEntity({ lState: "inner" }, "entity[0]");
+  assertEqual(ui._entities.entity._children[0]._children[0].lState, "inner");
+
+  // 0 index is specified as the new token, so EntUI should add the Entity
+  // to "entity" at index 0
+  ui.addEntity({ lState: "outer" }, "entity", 0);
+  assertEqual(ui._entities.entity._children[0].lState, "outer");
+});
+
 testSuite.runTests();

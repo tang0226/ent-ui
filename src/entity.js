@@ -196,7 +196,7 @@ export class Entity {
       throw new TypeError("Cannot add Entity to leaf Entity");
     }
 
-    if (token === undefined) {
+    if (token === undefined || token === null) {
       if (this._type === "list") {
         token = this._children.length;
       }

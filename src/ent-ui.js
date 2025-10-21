@@ -67,12 +67,12 @@ export class EntUI {
     }
 
     // Tokens that reach the entity to which we're adding (empty if we're adding a top-level ent)
-    const traverseTokens = tokens.slice(0, -1);
+    const traversalTokens = tokens.slice(0, -1);
     // final token (token to give `entObj` when adding)
-    const token = tokens[tokens.length - 1];
+    var token = tokens[tokens.length - 1];
 
     // See if we are adding a top-level entity
-    if (traverseTokens.length == 0) {
+    if (traversalTokens.length == 0) {
       // Seed the entity's path with its string token, then propagate the paths through the hierarchy
       entity._token = token;
       entity._path = new EntityPath([token]);
@@ -82,10 +82,13 @@ export class EntUI {
       this._entities[token] = entity;
     }
     else {
-      // Add `entity` to its correct parent entity
-      // (Entity.addEntity() initializes `entity`'s hierarchy)
-      // Avoid double UI linking / state extraction by setting the _connectUI option to false
-      this.getEntity(traverseTokens).addEntity(entity, token, { _connectUI: false });
+      // Handle ambiguous case (adding to list of lists): treat any final index token as a traversal token unless
+      // specified as the new token for inserting into a list
+      if (typeof token === "number" && newToken !== token) {
+        traversalTokens.push(token);
+        token = null;
+      }
+      this.getEntity(traversalTokens).addEntity(entity, token, { _connectUI: false });
     }
 
     // Link the Entity to this UI
