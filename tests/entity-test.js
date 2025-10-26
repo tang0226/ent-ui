@@ -164,6 +164,7 @@ testSuite.addTest("Utils initialize", () => {
 
 testSuite.addTest("Utils operate", () => {
   var e = new Entity({
+    lState: {},
     utils: {
       setA(n) {this.lState.a = n},
       setB(n) {this.lState.b = n},
@@ -254,6 +255,7 @@ testSuite.addTest("_initEventListeners() fails with arrow function handlers", ()
 testSuite.addTest("Event listeners operate", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
+    lState: {},
     events: {
       click() {
         this.lState.result = 50;
@@ -336,7 +338,7 @@ testSuite.addTest("forEachChild loops through each direct child (group)", () => 
     },
   });
   e.forEachChild((c, token) => {
-    c.lState.name = token;
+    c.lState = { name: token };
   });
   assertEqual(e._children.one.lState.name, "one");
   assertEqual(e._children.two.lState.name, "two");
@@ -348,7 +350,7 @@ testSuite.addTest("forEachChild loops through each direct child (list)", () => {
     children: [{}, {}, {}],
   });
   e.forEachChild((c, token) => {
-    c.lState.index = token;
+    c.lState = { index: token };
   });
   assertEqual(e._children[0].lState.index, 0);
   assertEqual(e._children[1].lState.index, 1);
