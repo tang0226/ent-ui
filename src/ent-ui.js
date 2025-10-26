@@ -9,6 +9,19 @@ export class EntUI {
     this.validators = {};
 
     // Init with options here
+    if (options.entities) {
+      if (typeof options.entities === "object") {
+        if (Array.isArray(options.entities)) {
+          throw new Error(`EntUI cannot accept entities option of type Array`);
+        }
+        for (const [token, config] of Object.entries(options.entities)) {
+          this.addEntity(config, token);
+        }
+      }
+      else {
+        throw new Error(`EntUI cannot accept entities option of type ${typeof options.entities}`);
+      }
+    }
   }
 
   get entities() {

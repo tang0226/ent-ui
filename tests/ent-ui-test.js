@@ -34,7 +34,39 @@ export function assertEntityLinkedToUI(entity, ui, msg = "") {
 }
 
 
+
+
 const testSuite = new TestSuite("EntUI");
+
+// Constructor
+testSuite.addTest("Constructor initializes with `entities` option", () => {
+  const ui = new EntUI({
+    entities: {
+      foo: {},
+      bar: {},
+    },
+  });
+  assertTruthy(ui._entities.foo);
+  assertTruthy(ui._entities.bar);
+});
+
+testSuite.addTest("Initialization fails with bad `entities` option type", () => {
+  assertThrows(() => {
+    const ui = new EntUI({
+      entities: 10,
+    });
+  }, "cannot accept entities option of type");
+  assertThrows(() => {
+    const ui = new EntUI({
+      entities: [],
+    });
+  }, "cannot accept entities option of type");
+  assertThrows(() => {
+    const ui = new EntUI({
+      entities: true,
+    });
+  }, "cannot accept entities option of type");
+});
 
 // _linkEntity
 testSuite.addTest("_linkEntity adds _ui prop to Entity and all descendants", () => {
