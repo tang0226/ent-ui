@@ -1,5 +1,4 @@
 TODO:
-* Allow EntUI initialization from config object
 * Add option for rendering functions
 * Removing Entities from Entities and EntUIs
   (insert state back into Entity, delete state from UI, then disassociate the Entity from the Entity or UI containing it and return the removed Entity)
