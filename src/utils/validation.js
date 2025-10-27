@@ -1,9 +1,9 @@
 function isValidPropChar(c) {
-  return /[a-zA-Z0-9_$]/.test(c);
+  return c && /[a-zA-Z0-9_$]/.test(c);
 }
 
 function isValidPropFirstChar(c) {
-  return /[a-zA-Z_$]/.test(c);
+  return c && /[a-zA-Z_$]/.test(c);
 }
 
 function isValidIndex(n) {
@@ -11,7 +11,7 @@ function isValidIndex(n) {
 }
 
 function isValidProp(str) {
-  return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(str);
+  return str && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(str);
 }
 
 function isValidParentOperator(str) {
