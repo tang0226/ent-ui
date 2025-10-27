@@ -351,7 +351,10 @@ export class Entity {
         if (isArrowFunction(handler)) {
           throw new InitError(`${event} event handler cannot be an arrow function`);
         }
-        this._domEl.addEventListener(event, handler.bind(this));
+        const boundHandler = handler.bind(this);
+        this._domEl.addEventListener(event, boundHandler);
+        // Store same handler reference in events
+        this.events[event] = boundHandler;
       }
     }
   }
