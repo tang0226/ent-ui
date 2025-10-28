@@ -86,19 +86,6 @@ export class Entity {
       }
     }
 
-    // Event listeners
-    this.events = config.events || {};
-    if (this._domEl) {
-      if (typeof this.events !== "object") {
-        throw new InitError("events property is not an object");
-      }
-
-      if (Object.keys(this.events).length) {
-        this._initEventListeners();
-      }
-    }
-
-
     // Children
     const children = config.children;
 
@@ -138,6 +125,19 @@ export class Entity {
     }
 
 
+    // Event listeners
+    this._events = config.events || {};
+    if (this._domEl) {
+      if (typeof this._events !== "object") {
+        throw new InitError("events property is not an object");
+      }
+
+      if (Object.keys(this._events).length) {
+        this._initEventListeners();
+      }
+    }
+
+
     // Custom initialization
     if (config.init && typeof config.init === "function") {
       this.init = config.init.bind(this);
@@ -173,6 +173,10 @@ export class Entity {
     return this._domEl;
   }
 
+  get events() {
+    return this._events;
+  }
+
   get ui() {
     return this._ui;
   }
@@ -188,6 +192,44 @@ export class Entity {
 
     this._domEl = domEl;
     this._initEventListeners();
+  }
+
+  addEventListener(event, handler) {
+    if (!this._domEl) {
+      throw new Error(`Cannot add event listener to Entity "${this._path.toString()}": Entity has no element`);
+    }
+    if (typeof handler != "function") {
+      throw new Error(`Cannot add event listener to Entity "${this._path.toString()}": event handler must be a function`);
+    }
+    if (isArrowFunction(handler)) {
+      throw new Error(`Cannot add event listener to Entity "${this._path.toString()}": event handler cannot be an arrow function`);
+    }
+    const bound = handler.bind(this);
+    this._domEl.addEventListener(event, bound);
+    
+    if (!this._events[event]) {
+      this._events[event] = [];
+    }
+    this._events[event].push({handler, bound});
+  }
+
+  // Removes an event listener from the Entity's domEl
+  removeEventListener(event, handler) {
+    if (!this._domEl) {
+      throw new Error(`Cannot remove event listener from Entity "${this._path.toString()}": Entity has no element`);
+    }
+
+    const listeners = this._events[event];
+    if (listeners === undefined) {
+      throw new Error(`Cannot remove event listener from Entity "${this._path.toString}}": no event listener found for "${event}" event`);
+    }
+
+    const i = listeners.findIndex(l => l.handler === handler);
+    if (i === -1) {
+      throw new Error(`Cannot remove event listener from Entity "${this._path.toString}}": handler doesn't match any currently present`);
+    }
+    const listener = listeners.splice(i, 1);
+    this._domEl.removeEventListener(event, listener.bound);
   }
 
   // entObj can be either a config object or an Entity instance
@@ -344,17 +386,9 @@ export class Entity {
   // Attaches all events to DOM element if possible
   _initEventListeners() {
     if (this._domEl) {
-      for (const [event, handler] of Object.entries(this.events)) {
-        if (typeof handler != "function") {
-          throw new InitError(`${event} event handler must be a function`);
-        }
-        if (isArrowFunction(handler)) {
-          throw new InitError(`${event} event handler cannot be an arrow function`);
-        }
-        const boundHandler = handler.bind(this);
-        this._domEl.addEventListener(event, boundHandler);
-        // Store same handler reference in events
-        this.events[event] = boundHandler;
+      for (const [event, handler] of Object.entries(this._events)) {
+        this._events[event] = null;
+        this.addEventListener(event, handler);
       }
     }
   }

@@ -209,7 +209,7 @@ testSuite.addTest("Initialization fails with arrow function utils", () => {
 });
 
 // Event listeners
-testSuite.addTest("_initEventListeners(): Event listeners initialize", () => {
+testSuite.addTest("Constructor: Event listeners initialize", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
     events: {
@@ -218,7 +218,7 @@ testSuite.addTest("_initEventListeners(): Event listeners initialize", () => {
       },
     },
   });
-  assertType(e.events.click, "function");
+  assertType(e.events.click[0].handler, "function");
 });
 
 testSuite.addTest("Initialization fails with non-object events", () => {
@@ -230,26 +230,155 @@ testSuite.addTest("Initialization fails with non-object events", () => {
   }, "events property is not an object");
 });
 
-testSuite.addTest("_initEventListeners() fails with non-function handlers", () => {
+// addEventListener()
+testSuite.addTest("addEventListener adds event listener to domEl", () => {
+  var e = new Entity({
+    domEl: document.createElement("div"),
+  });
+  e.addEventListener("click", function(e) {
+    this.domEl.innerText = "hello world";
+  });
+  e.domEl.dispatchEvent(new Event("click"));
+  assertEqual(e.domEl.innerText, "hello world");
+});
+
+testSuite.addTest("addEventListener supports multiple events of same type", () => {
+  var e = new Entity({
+    domEl: document.createElement("div"),
+  });
+  e.addEventListener("click", function(e) {
+    this.domEl.innerText = "hello world";
+  });
+    e.addEventListener("click", function(e) {
+    this.lState = "clicked";
+  });
+  e.domEl.dispatchEvent(new Event("click"));
+  assertEqual(e.domEl.innerText, "hello world");
+  assertEqual(e.lState, "clicked");
+});
+
+testSuite.addTest("addEventListener fails on Entity without domEl", () => {
+  var e = new Entity();
+  assertThrows(() => {
+    e.addEventListener("click", function() {});
+  }, "Entity has no element");
+});
+
+testSuite.addTest("addEventListener fails with non-function handlers", () => {
   assertThrows(() => {
     var e = new Entity({
       domEl: document.createElement("div"),
-      events: {
-        click: "not-a-function",
-      },
     });
+    e.addEventListener("click", "not-a-function");
   }, "event handler must be a function");
 });
 
-testSuite.addTest("_initEventListeners() fails with arrow function handlers", () => {
+testSuite.addTest("addEventListener fails with arrow function handlers", () => {
   assertThrows(() => {
     var e = new Entity({
       domEl: document.createElement("div"),
-      events: {
-        click: (e) => {return e},
-      },
     });
+    e.addEventListener("click", () => {});
   }, "event handler cannot be an arrow function");
+});
+
+// removeEventListener()
+testSuite.addTest("removeEventListener removes event listener from self", () => {
+  var handler = function() {
+    this.lState = "clicked";
+  };
+  var e = new Entity({
+    domEl: document.createElement("div"),
+    events: {
+      click: handler,
+    },
+  });
+  e.removeEventListener("click", handler);
+  assertFalsy(e.events.click.length);
+});
+
+testSuite.addTest("removeEventListener differentiates between two callbacks for same event type", () => {
+  var handler1 = function() {
+    this.lState = "clicked";
+  };
+  var handler2 = function() {
+    this.domEl.innerText = "clicked";
+  };
+
+  var e = new Entity({
+    domEl: document.createElement("div"),
+  });
+  e.addEventListener("click", handler1);
+  e.addEventListener("click", handler2);
+
+  e.removeEventListener("click", handler1);
+
+  // Make sure there is still a click event left
+  assertEqual(e.events.click.length, 1);
+});
+
+testSuite.addTest("removeEventListener fails on Entity without domEl", () => {
+  var e = new Entity();
+  assertThrows(() => {
+    e.removeEventListener();
+  }, "Entity has no element");
+});
+
+testSuite.addTest("removeEventListener fails when no event listener of matching type found", () => {
+  var e = new Entity({
+    domEl: document.createElement("div"),
+    events: {
+      click() {},
+    },
+  });
+  assertThrows(() => {
+    e.removeEventListener("focus", function() {});
+  }, /no event listener found for.+event/);
+});
+
+testSuite.addTest("removeEventListener fails when no matching handler found", () => {
+  var e = new Entity({
+    domEl: document.createElement("div"),
+    events: {
+      click() {},
+    },
+  });
+  assertThrows(() => {
+    e.removeEventListener("click", function() {});
+  }, "handler doesn't match any currently present");
+});
+
+
+testSuite.addTest("Event listeners operate", () => {
+  var e = new Entity({
+    domEl: document.createElement("div"),
+    lState: {},
+    events: {
+      click() {
+        this.lState.result = 50;
+      },
+    },
+  });
+  e.domEl.dispatchEvent(new Event("click"));
+  assertEqual(e.lState.result, 50);
+});
+
+testSuite.addTest("Multiple event listeners of same type on same Entity both execute", () => {
+  var e = new Entity({
+    domEl: document.createElement("div"),
+    lState: {},
+    events: {
+      click() {
+        this.lState.result = 50;
+      },
+    },
+  });
+  e.addEventListener("click", function() {
+    this.domEl.innerText = "foo";
+  });
+  e.domEl.dispatchEvent(new Event("click"));
+  assertEqual(e.lState.result, 50);
+  assertEqual(e.domEl.innerText, "foo");
 });
 
 testSuite.addTest("Event listeners operate", () => {
