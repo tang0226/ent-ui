@@ -81,14 +81,14 @@ testSuite.addTest("Initialization fails with non-object attributes", () => {
 });
 
 // State and local state
-testSuite.addTest("State initializes", () => {
+testSuite.addTest("constructor: state initializes", () => {
   var e = new Entity({
     state: { value: 10 },
   });
   assertEqual(e.state.value, 10);
 });
 
-testSuite.addTest("Local state initializes", () => {
+testSuite.addTest("constructor: local state initializes", () => {
   var e = new Entity({
     lState: { isActive: true },
   });
@@ -96,7 +96,7 @@ testSuite.addTest("Local state initializes", () => {
 });
 
 // Validators
-testSuite.addTest("Validators initialize", () => {
+testSuite.addTest("constructor: validators initialize", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
     validators: {
@@ -151,7 +151,7 @@ testSuite.addTest("Initialization fails with arrow function validators", () => {
 });
 
 // Utils
-testSuite.addTest("Utils initialize", () => {
+testSuite.addTest("constructor: utils initialize", () => {
   var e = new Entity({
     utils: {
       setA(n) {this.lState.a = n},
@@ -209,7 +209,7 @@ testSuite.addTest("Initialization fails with arrow function utils", () => {
 });
 
 // Event listeners
-testSuite.addTest("Constructor: Event listeners initialize", () => {
+testSuite.addTest("constructor: Event listeners initialize", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
     events: {
@@ -379,20 +379,6 @@ testSuite.addTest("Multiple event listeners of same type on same Entity both exe
   e.domEl.dispatchEvent(new Event("click"));
   assertEqual(e.lState.result, 50);
   assertEqual(e.domEl.innerText, "foo");
-});
-
-testSuite.addTest("Event listeners operate", () => {
-  var e = new Entity({
-    domEl: document.createElement("div"),
-    lState: {},
-    events: {
-      click() {
-        this.lState.result = 50;
-      },
-    },
-  });
-  e.domEl.dispatchEvent(new Event("click"));
-  assertEqual(e.lState.result, 50);
 });
 
 // Entity.setDomEl()
