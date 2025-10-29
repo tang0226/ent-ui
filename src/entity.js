@@ -155,7 +155,7 @@ export class Entity {
 
   // Getters
   get path() {
-    return new EntityPath(this.path);
+    return new EntityPath(this._path.tokens);
   }
 
   get parent() {
