@@ -36,10 +36,16 @@ export class Entity {
     ) throw new InitError("attributes property is not an object");
 
     // Temp state
-    this.state = config.state || null;
+    this.state = null;
+    if (config.state !== null && config.state !== undefined) {
+      this.state = config.state;
+    }
 
     // Local state
-    this.lState = config.lState || null;
+    this.lState = null;
+    if (config.lState !== null && config.lState !== undefined) {
+      this.lState = config.lState;
+    }
 
     // Validators
     const validators = config.validators;
