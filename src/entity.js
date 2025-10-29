@@ -166,7 +166,9 @@ export class Entity {
 
   get children() {
     // Deep copy to avoid direct rewriting of _children or its attributes
-    return {...this._children};
+    if (this._type == "group") return {...this._children};
+    if (this._type == "list") return [...this._children];
+    return null;
   }
 
   get domEl() {
