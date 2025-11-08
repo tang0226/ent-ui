@@ -16,7 +16,8 @@ function isValidProp(str) {
 
 function isValidParentOperator(str) {
   if (typeof str !== "string") return false;
-  return str.split("").every((char) => char === "^");
+  for (let char of str) if (char != "^") return false;
+  return true;
 }
 
 function isArrowFunction(func) {
