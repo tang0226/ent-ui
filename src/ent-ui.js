@@ -119,12 +119,10 @@ export class EntUI {
     }
     else {
       // Treat toRemove as a path
-      var path = new EntityPath(toRemove, { deepCopy: false });
-      var tokens = path.tokens;
-      var traverseTokens = tokens.slice(0, -1);
+      var tokens = (new EntityPath(toRemove, { deepCopy: false })).tokens;
       token = tokens[tokens.length - 1];
-      if (traverseTokens.length) {
-        parent = this.getEntity(traverseTokens);
+      if (tokens.length > 1) {
+        parent = this.getEntity(tokens.slice(0, -1));
       }
     }
 
@@ -147,6 +145,41 @@ export class EntUI {
     return entity;
   }
 
+  deleteEntity(toDelete) {
+    var parent, token;
+    if (toDelete instanceof Entity) {
+      if (toDelete._ui !== this) {
+        throw new Error(`Cannot delete Entity from UI: Entity \`_ui\` property does not match this UI`);
+      }
+      token = toDelete._token;
+      parent = toDelete._parent;
+    }
+    else {
+      // Treat toDelete as a path
+      var tokens = (new EntityPath(toDelete, { deepCopy: false })).tokens;
+      token = tokens[tokens.length - 1];
+      if (tokens.length > 1) {
+        parent = this.getEntity(tokens.slice(0, -1));
+      }
+    }
+
+    var entity = parent ? parent._children[token] : this._entities[token];
+
+    if (parent) {
+      parent.deleteEntity(token);
+    }
+    else {
+      delete this._entities[token];
+
+      // Remove event listeners, since there is no parent removeEntity call to do that
+      if (entity.domEl) {
+        entity.removeAllEventListeners();
+      }
+    }
+
+    // Remove the Entity's authoritative state
+    this._removeEntityState(entity);
+  }
 
   getEntity(path) {
     var tokens = path;
@@ -245,24 +278,27 @@ export class EntUI {
     }
   }
 
+  // Removes the Entity's state object from `_state` and returns it
+  _removeEntityState(entity) {
+    let parentStateObj = entity._parent ? this._getStateObj(entity._parent._path) : this._state;
+    let parentType = entity._parent?._type;
+    let stateObj; // to be returned
+    if (!parentType || parentType === "group") {
+      stateObj = parentStateObj[entity._token];
+      delete parentStateObj[entity._token];
+      return stateObj;
+    }
+    else if (parentType === "list") {
+      stateObj = parentStateObj.children.splice(entity._token, 1);
+      return stateObj;
+    }
+  }
+
   // Opposite of state extraction: when an Entity is removed, remove its corresponding
   // object, embedding the state back into the Entity as temp-state
   _embedEntityState(entity, stateObj = null) {
     if (stateObj === null) {
-      // Store this Entity's state object
-      stateObj = this._getStateObj(entity._path);
-
-      // Delete this Entity's state object from the parent state object
-      const parentStateObj = entity._parent ? this._getStateObj(entity._parent._path) : this._state;
-      const parentType = entity._parent?._type;
-      
-      // Delete by key if parent is a group or the entity is top-level
-      if (!parentType || parentType === "group") {
-        delete parentStateObj[entity._token];
-      }
-      else if (parentType === "list") {
-        parentStateObj.children.splice(entity._token, 1);
-      }
+      stateObj = this._removeEntityState(entity);
     }
 
     entity._state = stateObj.state;

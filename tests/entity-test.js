@@ -594,6 +594,8 @@ testSuite.addTest("addEntity fails when a non-object is passed", () => {
   }, "Entity to add is not an object");
 });
 
+
+// removeEntity()
 testSuite.addTest("removeEntity removes Entity from _children (group)", () => {
   var e = new Entity({
     children: { foo: {} },
@@ -716,7 +718,7 @@ testSuite.addTest("removeEntity fails with invalid property name", () => {
   }, /Cannot remove Entity from group.+not a valid property name/);
 });
 
-testSuite.addTest("removeEntity fails if child found that matches token", () => {
+testSuite.addTest("removeEntity fails if no child found that matches token", () => {
   var e = new Entity({
     children: {foo: {}},
   });
@@ -724,6 +726,114 @@ testSuite.addTest("removeEntity fails if child found that matches token", () => 
     e.removeEntity("bar");
   }, /Cannot remove Entity from group.+no child found with token/);
 });
+
+
+// deleteEntity()
+testSuite.addTest("deleteEntity removes Entity from _children (group)", () => {
+  var e = new Entity({
+    children: { foo: {} },
+  });
+  var foo = e._children.foo;
+  e.deleteEntity("foo");
+  assertEqual(e._children.foo, undefined);
+});
+
+testSuite.addTest("deleteEntity removes Entity from _children (list)", () => {
+  var e = new Entity({
+    children: [{ lState: 0 }, { lState: 1 }, { lState: 2 }, { lState: 3 }],
+  });
+  e.deleteEntity(1);
+  assertEqual(e._children[0].lState, 0);
+  assertEqual(e._children[1].lState, 2);
+});
+
+testSuite.addTest("deleteEntity from list updates hierarchy for other children", () => {
+  var e = new Entity({
+    children: [{}, {}, {}, {}],
+  });
+  // Use Entity's children() getter
+  var children = e.children;
+  e.deleteEntity(0)
+  assertDeepEqual(e._children, children.slice(1));
+  assertValidHierarchy(e);
+});
+
+testSuite.addTest("deleteEntity removes event listeners", () => {
+  var e = new Entity({
+    children: {
+      child: {
+        domEl: document.createElement("div"),
+        lState: {
+          clicked: 0,
+          focused: 0,
+        },
+        events: {
+          click() {this.lState.clicked++},
+          focus() {this.lState.focused++},
+        },
+      },
+    },
+  });
+  var child = e._children.child;
+  child.domEl.dispatchEvent(new Event("click"));
+  child.domEl.dispatchEvent(new Event("focus"));
+  assertEqual(child.lState.clicked, 1);
+  assertEqual(child.lState.focused, 1);
+
+  e.deleteEntity("child");
+  
+  // Assert that event listeners have been removed
+  child.domEl.dispatchEvent(new Event("click"));
+  child.domEl.dispatchEvent(new Event("focus"));
+  // State shouldn't change because the event listeners should be removed by now
+  assertEqual(child.lState.clicked, 1);
+  assertEqual(child.lState.focused, 1);
+});
+
+testSuite.addTest("deleteEntity fails on leaf Entity", () => {
+  var e = new Entity();
+  assertThrows(() => {
+    e.deleteEntity(0);
+  }, "Cannot delete Entity from leaf Entity");
+});
+
+testSuite.addTest("deleteEntity fails with invalid index token", () => {
+  var e = new Entity({
+    children: [{}],
+  });
+  assertThrows(() => {
+    e.deleteEntity(0.2);
+  }, /Cannot delete Entity from list.+not a valid index/);
+});
+
+testSuite.addTest("deleteEntity fails with out-of-range index", () => {
+  var e = new Entity({
+    children: [{}],
+  });
+  assertThrows(() => {
+    e.deleteEntity(1);
+  }, /Cannot delete Entity from list.+out of range/);
+});
+
+testSuite.addTest("deleteEntity fails with invalid property name", () => {
+  var e = new Entity({
+    children: {foo: {}},
+  });
+  assertThrows(() => {
+    e.deleteEntity("0foo");
+  }, /Cannot delete Entity from group.+not a valid property name/);
+});
+
+testSuite.addTest("deleteEntity fails if no child found that matches token", () => {
+  var e = new Entity({
+    children: {foo: {}},
+  });
+  assertThrows(() => {
+    e.deleteEntity("bar");
+  }, /Cannot delete Entity from group.+no child found with token/);
+});
+
+
 
 testSuite.addTest("Hierarchy is valid with deep nesting", () => {
   assertValidHierarchy(new Entity({

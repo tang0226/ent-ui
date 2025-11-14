@@ -351,12 +351,7 @@ export class Entity {
         throw new Error(`Cannot remove Entity from list ${this.path.toString()}: index ${token} is out of range`);
       }
 
-      ent = this._children.splice(token, 1)[0];
-      // Update tokens for subsequent children
-      for (let i = token; i < this._children.length; i++) {
-        this._children[i]._token = i;
-        this._children[i]._setToken(i);
-      }
+      ent = this._removeEntityFromHierarchy(token);
     }
 
     if (this._type === "group") {
@@ -364,12 +359,11 @@ export class Entity {
         throw new Error(`Cannot remove Entity from group "${this.path.toString()}": token "${token}" is not a valid property name`);
       }
 
-      ent = this._children[token];
-      if (ent === undefined) {
+      if (this._children[token] === undefined) {
         throw new Error(`Cannot remove Entity from group "${this.path.toString()}": no child found with token ${token}`);
       }
 
-      delete this._children[token];
+      ent = this._removeEntityFromHierarchy(token);
     }
 
     // Remove Entity's event listeners
@@ -388,6 +382,45 @@ export class Entity {
     }
 
     return ent;
+  }
+
+  // Like removeEntity, but does not return the Entity or prepare it to stand alone
+  deleteEntity(token) {
+    if (this._type === "leaf") {
+      throw new Error(`Cannot delete Entity from leaf Entity "${this.path.toString()}"`);
+    }
+
+    // Entity to remove
+    let ent;
+
+    // Remove child Entity from hierarchy
+    if (this._type === "list") {
+      if (!isValidIndex(token)) {
+        throw new Error(`Cannot delete Entity from list ${this.path.toString()}: token "${token}" is not a valid index`);
+      }
+      if (token >= this._children.length) {
+        throw new Error(`Cannot delete Entity from list ${this.path.toString()}: index ${token} is out of range`);
+      }
+
+      ent = this._removeEntityFromHierarchy(token);
+    }
+
+    if (this._type === "group") {
+      if (!isValidProp(token)) {
+        throw new Error(`Cannot delete Entity from group "${this.path.toString()}": token "${token}" is not a valid property name`);
+      }
+
+      if (this._children[token] === undefined) {
+        throw new Error(`Cannot delete Entity from group "${this.path.toString()}": no child found with token ${token}`);
+      }
+
+      ent = this._removeEntityFromHierarchy(token);
+    }
+
+    // Remove Entity's event listeners
+    if (ent._domEl) {
+      ent.removeAllEventListeners();
+    }
   }
 
   // Gets the entity at a certain path (string, array of tokens, EntityPath instance);
@@ -487,6 +520,24 @@ export class Entity {
         c._updateHierarchy();
       });
     }
+  }
+
+  // Deletes / removes an Entity object from this Entity's `children`
+  _removeEntityFromHierarchy(token) {
+    let ent;
+    if (this._type == "group") {
+      ent = this._children[token];
+      delete this._children[token];
+    }
+    if (this._type == "list") {
+      ent = this._children.splice(token, 1)[0];
+      // Update tokens for subsequent children
+      for (let i = token; i < this._children.length; i++) {
+        this._children[i]._token = i;
+        this._children[i]._setToken(i);
+      }
+    }
+    return ent;
   }
 
   // Sets self as the root of a (new) hierarchy tree. Used to reset removed Entities

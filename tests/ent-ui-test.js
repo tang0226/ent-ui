@@ -337,6 +337,49 @@ testSuite.addTest("removeEntity fails on Entity that isn't part of this UI", () 
 });
 
 
+// deleteEntity()
+testSuite.addTest("deleteEntity removes Entity from UI's `entities` (parameter type: Entity)", () => {
+  var ui = new EntUI({
+    entities: {
+      entity: {
+        children: [{}, {}],
+      },
+    },
+  });
+  ui.deleteEntity(ui._entities.entity);
+  assertDeepEqual(ui._entities, {});
+});
+
+testSuite.addTest("deleteEntity removes Entity from UI's `entities` (parameter type: EntityPath type)", () => {
+  var ui = new EntUI({
+    entities: {
+      entity: {
+        children: [{lState: 0}, {lState: 1}],
+      },
+    },
+  });
+  ui.deleteEntity("entity[0]");
+  assertEqual(ui._entities.entity._children[0].lState, 1);
+  assertEqual(ui._entities.entity._children.length, 1);
+});
+
+testSuite.addTest("deleteEntity fails on Entity that isn't part of this UI", () => {
+  var ui1 = new EntUI({
+    entities: {
+      entity1: {},
+    },
+  });
+  var ui2 = new EntUI({
+    entities: {
+      entity2: {},
+    },
+  });
+  assertThrows(() => {
+    ui1.deleteEntity(ui2._entities.entity2);
+  }, "Cannot delete Entity from UI: Entity `_ui` property does not match this UI");
+});
+
+
 // getEntity()
 testSuite.addTest("getEntity succeeds on single-token path", () => {
   var ui = new EntUI();
