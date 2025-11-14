@@ -385,7 +385,7 @@ export class Entity {
   }
 
   // Like removeEntity, but does not return the Entity or prepare it to stand alone
-  deleteEntity(token) {
+  deleteEntity(token, { _handleUiUpdates = true } = {}) {
     if (this._type === "leaf") {
       throw new Error(`Cannot delete Entity from leaf Entity "${this.path.toString()}"`);
     }
@@ -420,6 +420,11 @@ export class Entity {
     // Remove Entity's event listeners
     if (ent._domEl) {
       ent.removeAllEventListeners();
+    }
+
+    // If the Entity has a UI, remove its authoritative state object
+    if (ent._ui && _handleUiUpdates) {
+      ent._ui._removeEntityState(ent);
     }
   }
 

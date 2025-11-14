@@ -166,7 +166,7 @@ export class EntUI {
     var entity = parent ? parent._children[token] : this._entities[token];
 
     if (parent) {
-      parent.deleteEntity(token);
+      parent.deleteEntity(token, { _handleUiUpdates: false });
     }
     else {
       delete this._entities[token];
@@ -289,7 +289,7 @@ export class EntUI {
       return stateObj;
     }
     else if (parentType === "list") {
-      stateObj = parentStateObj.children.splice(entity._token, 1);
+      stateObj = parentStateObj.children.splice(entity._token, 1)[0];
       return stateObj;
     }
   }

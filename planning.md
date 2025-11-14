@@ -1,4 +1,5 @@
 TODO:
+* Add integration tests for Entity.deleteEntity and removeEntity (_handleUiUpdates)
 * Start writing docs
 * Add Entity init tests
 * Add rendering functions

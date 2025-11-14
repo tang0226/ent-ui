@@ -45,4 +45,44 @@ testSuite.addTest("addEntity updates new Entity's UI info if the parent Entity h
   assertEntityLinkedToUI(ui.getEntity("entity.child"), ui);
 });
 
+testSuite.addTest("Entity.removeEntity calls UI state cleanup if applicable", () => {
+  var ui = new EntUI({
+    entities: {
+      entity: {
+        children: {
+          child: { children: [
+            { state: "child0" },
+            { state: "child1" },
+          ]},
+        },
+      },
+    },
+  });
+
+  ui.getEntity("entity.child").removeEntity(0);
+  // Check that the correct state object was removed
+  assertEqual(ui._state.entity.children.child.children.length, 1);
+  assertEqual(ui._state.entity.children.child.children[0].state, "child1");
+});
+
+testSuite.addTest("Entity.deleteEntity calls UI state cleanup if applicable", () => {
+  var ui = new EntUI({
+    entities: {
+      entity: {
+        children: {
+          child: { children: [
+            { state: "child0" },
+            { state: "child1" },
+          ]},
+        },
+      },
+    },
+  });
+
+  ui.getEntity("entity.child").deleteEntity(0);
+  // Check that the correct state object was removed
+  assertEqual(ui._state.entity.children.child.children.length, 1);
+  assertEqual(ui._state.entity.children.child.children[0].state, "child1");
+});
+
 testSuite.runTests();
