@@ -101,14 +101,50 @@ export class EntUI {
         traversalTokens.push(token);
         token = null;
       }
-      this.getEntity(traversalTokens).addEntity(entity, token, { _connectUI: false });
+      this.getEntity(traversalTokens).addEntity(entity, token, { _handleUiUpdates: false });
     }
 
-    // Link the Entity to this UI
-    this._linkEntity(entity);
+    this._connectEntity(entity);
+  }
 
-    // Extract state from the Entity and its descendants
-    this._extractEntityState(entity);
+  // Accepts a connected Entity or any path format
+  removeEntity(toRemove) {
+    var parent, token;
+    if (toRemove instanceof Entity) {
+      if (toRemove._ui !== this) {
+        throw new Error(`Cannot remove Entity from UI: Entity \`_ui\` property does not match this UI`);
+      }
+      token = toRemove._token;
+      parent = toRemove._parent;
+    }
+    else {
+      // Treat toRemove as a path
+      var path = new EntityPath(toRemove, { deepCopy: false });
+      var tokens = path.tokens;
+      var traverseTokens = tokens.slice(0, -1);
+      token = tokens[tokens.length - 1];
+      if (traverseTokens.length) {
+        parent = this.getEntity(traverseTokens);
+      }
+    }
+
+    var entity = parent ? parent._children[token] : this._entities[token];
+    if (parent) {
+      parent.removeEntity(token, { _handleUiUpdates: false });
+    }
+    else {
+      delete this._entities[token];
+
+      // Remove event listeners, since there is no parent removeEntity call to do that
+      if (entity.domEl) {
+        entity.removeAllEventListeners();
+      }
+    }
+
+    this._disconnectEntity(entity);
+    entity._setAsHierarchyRoot();
+
+    return entity;
   }
 
 
@@ -153,15 +189,23 @@ export class EntUI {
 
 
   // Recursively adds the `ui` prop to an entity and all its descendants
-  _linkEntity(entity) {
+  _addUiProp(entity) {
     entity._ui = this;
     if (entity._children) {
       entity.forEachChild((c) => {
-        this._linkEntity(c);
+        this._addUiProp(c);
       });
     }
   }
 
+  _removeUiProp(entity) {
+    entity._ui = null;
+    if (entity._children) {
+      entity.forEachChild((c) => {
+        this._removeUiProp(c);
+      });
+    }
+  }
 
   // Recursively extract the temp-state from a new entity and its descendants into the `state` prop.
   // When adding an Entity, this step must take place after hierarchy initialization (Entity._updateHierarchy())
@@ -181,11 +225,11 @@ export class EntUI {
     }
 
     stateObj.state = null;
-    if (entity.state) {
+    if (entity._state) {
       // Move the entity's state into stateObj
-      // (which refers to the correct location in `this.state`)
-      stateObj.state = entity.state;
-      entity.state = null;
+      // (which refers to the correct location in `this._state`)
+      stateObj.state = entity._state;
+      entity._state = null;
     }
 
     if (entity._children) {
@@ -201,12 +245,52 @@ export class EntUI {
     }
   }
 
+  // Opposite of state extraction: when an Entity is removed, remove its corresponding
+  // object, embedding the state back into the Entity as temp-state
+  _embedEntityState(entity, stateObj = null) {
+    if (stateObj === null) {
+      // Store this Entity's state object
+      stateObj = this._getStateObj(entity._path);
+
+      // Delete this Entity's state object from the parent state object
+      const parentStateObj = entity._parent ? this._getStateObj(entity._parent._path) : this._state;
+      const parentType = entity._parent?._type;
+      
+      // Delete by key if parent is a group or the entity is top-level
+      if (!parentType || parentType === "group") {
+        delete parentStateObj[entity._token];
+      }
+      else if (parentType === "list") {
+        parentStateObj.children.splice(entity._token, 1);
+      }
+    }
+
+    entity._state = stateObj.state;
+
+    if (entity._children) {
+      entity.forEachChild((c, token) => {
+        this._embedEntityState(c, stateObj.children[token]);
+      });
+    }
+  }
+
+  // Adds the `ui` prop to the Entity and extract its temp-state into the UI's `state` prop
+  _connectEntity(entity) {
+    this._addUiProp(entity);
+    this._extractEntityState(entity);
+  }
+
+  _disconnectEntity(entity) {
+    this._removeUiProp(entity);
+    this._embedEntityState(entity);
+  }
+
 
   // Returns the state object (branch) at a given (assumed valid) path
   _getStateObj(path) {
     const tokens = path.tokens;
     var stateTree = this._state[tokens[0]];
-    for (let token of tokens.slice(1)) {
+    for (const token of tokens.slice(1)) {
       stateTree = stateTree.children[token];
     }
     return stateTree;

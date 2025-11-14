@@ -1,5 +1,10 @@
 import { EntityPath } from "./entity-path.js";
-import { isArrowFunction, isValidParentOperator } from "./utils/validation.js";
+import {
+  isArrowFunction,
+  isValidParentOperator,
+  isValidProp,
+  isValidIndex,
+} from "./utils/validation.js";
 
 class InitError extends Error {
   constructor(msg) {
@@ -36,9 +41,9 @@ export class Entity {
     ) throw new InitError("attributes property is not an object");
 
     // Temp state
-    this.state = null;
+    this._state = null;
     if (config.state !== null && config.state !== undefined) {
-      this.state = config.state;
+      this._state = config.state;
     }
 
     // Local state
@@ -189,7 +194,7 @@ export class Entity {
     return this._ui;
   }
 
-  // Links the Entity to a DOM element; should only be run once, and only if no DOM element was passed at initialization
+  // Associates the Entity with a DOM element; should only be run once, and only if no DOM element was passed at initialization
   setDomEl(domEl) {
     if (this._domEl) {
       throw new Error(`Cannot set DOM element of Entity "${this._path.toString()}": Entity already has a DOM element`);
@@ -222,6 +227,7 @@ export class Entity {
   }
 
   // Removes an event listener from the Entity's domEl
+  // (accepts event type and original unbound handler)
   removeEventListener(event, handler) {
     if (!this._domEl) {
       throw new Error(`Cannot remove event listener from Entity "${this._path.toString()}": Entity has no element`);
@@ -229,19 +235,31 @@ export class Entity {
 
     const listeners = this._events[event];
     if (listeners === undefined) {
-      throw new Error(`Cannot remove event listener from Entity "${this._path.toString}}": no event listener found for "${event}" event`);
+      throw new Error(`Cannot remove event listener from Entity "${this._path.toString()}": no event listener found for "${event}" event`);
     }
 
     const i = listeners.findIndex(l => l.handler === handler);
     if (i === -1) {
-      throw new Error(`Cannot remove event listener from Entity "${this._path.toString}}": handler doesn't match any currently present`);
+      throw new Error(`Cannot remove event listener from Entity "${this._path.toString()}": handler doesn't match any currently present`);
     }
     const listener = listeners.splice(i, 1);
-    this._domEl.removeEventListener(event, listener.bound);
+    this._domEl.removeEventListener(event, listener[0].bound);
+  }
+
+  removeAllEventListeners() {
+    if (!this._domEl) {
+      throw new Error(`Cannot remove event listeners from Entity "${this._path.toString()}": Entity has no element`);
+    }
+    for (const [event, handlers] of Object.entries(this._events)) {
+      for (const handler of handlers) {
+        this._domEl.removeEventListener(event, handler.bound);
+      }
+      delete this._events[event];
+    }
   }
 
   // entObj can be either a config object or an Entity instance
-  addEntity(entObj, token, { _updateHierarchy = true, _connectUI = true } = {}) {
+  addEntity(entObj, token, { _updateHierarchy = true, _handleUiUpdates = true } = {}) {
     if (this._type == "leaf") {
       throw new TypeError("Cannot add Entity to leaf Entity");
     }
@@ -308,13 +326,68 @@ export class Entity {
       entity._updateHierarchy();
     }
 
-    // Link the new Entity to self's UI object, if applicable
-    if (this._ui && _connectUI) {
-      this._ui._linkEntity(entity);
-      this._ui._extractEntityState(entity);
+    // connect the new Entity to self's UI object, if applicable
+    if (this._ui && _handleUiUpdates) {
+      this._ui._connectEntity(entity);
     }
 
     return entity;
+  }
+
+  removeEntity(token, { _handleUiUpdates = true } = {}) {
+    if (this._type === "leaf") {
+      throw new Error(`Cannot remove Entity from leaf Entity "${this.path.toString()}"`);
+    }
+
+    // Entity to remove
+    let ent;
+
+    // Remove child Entity from hierarchy
+    if (this._type === "list") {
+      if (!isValidIndex(token)) {
+        throw new Error(`Cannot remove Entity from list ${this.path.toString()}: token "${token}" is not a valid index`);
+      }
+      if (token >= this._children.length) {
+        throw new Error(`Cannot remove Entity from list ${this.path.toString()}: index ${token} is out of range`);
+      }
+
+      ent = this._children.splice(token, 1)[0];
+      // Update tokens for subsequent children
+      for (let i = token; i < this._children.length; i++) {
+        this._children[i]._token = i;
+        this._children[i]._setToken(i);
+      }
+    }
+
+    if (this._type === "group") {
+      if (!isValidProp(token)) {
+        throw new Error(`Cannot remove Entity from group "${this.path.toString()}": token "${token}" is not a valid property name`);
+      }
+
+      ent = this._children[token];
+      if (ent === undefined) {
+        throw new Error(`Cannot remove Entity from group "${this.path.toString()}": no child found with token ${token}`);
+      }
+
+      delete this._children[token];
+    }
+
+    // Remove Entity's event listeners
+    if (ent._domEl) {
+      ent.removeAllEventListeners();
+    }
+
+    // Disconnect Entity from the UI
+    if (ent._ui) {
+      if (_handleUiUpdates) {
+        ent._ui._disconnectEntity(ent);
+      }
+    }
+    else {
+      ent._setAsHierarchyRoot();
+    }
+
+    return ent;
   }
 
   // Gets the entity at a certain path (string, array of tokens, EntityPath instance);
@@ -412,6 +485,29 @@ export class Entity {
     if (this._children) {
       this.forEachChild((c) => {
         c._updateHierarchy();
+      });
+    }
+  }
+
+  // Sets self as the root of a (new) hierarchy tree. Used to reset removed Entities
+  _setAsHierarchyRoot() {
+    this._parent = null;
+    this._token = null;
+    this._path = new EntityPath([]);
+    this._updateHierarchy();
+  }
+
+  _setToken(token, index = null) {
+    if (index === null) {
+      this._token = token;
+      index = this._path.tokens.length - 1;
+    }
+
+    this._path.tokens[index] = token;
+
+    if (this._children) {
+      this.forEachChild((c) => {
+        c._setToken(token, index);
       });
     }
   }

@@ -85,7 +85,7 @@ testSuite.addTest("constructor: state initializes", () => {
   var e = new Entity({
     state: { value: 10 },
   });
-  assertEqual(e.state.value, 10);
+  assertEqual(e._state.value, 10);
 });
 
 testSuite.addTest("constructor: local state initializes", () => {
@@ -592,6 +592,137 @@ testSuite.addTest("addEntity fails when a non-object is passed", () => {
   assertThrows(() => {
     e.addEntity("not-an-object", "child");
   }, "Entity to add is not an object");
+});
+
+testSuite.addTest("removeEntity removes Entity from _children (group)", () => {
+  var e = new Entity({
+    children: { foo: {} },
+  });
+  var foo = e._children.foo;
+  e.removeEntity("foo");
+  assertEqual(e._children.foo, undefined);
+});
+
+testSuite.addTest("removeEntity removes Entity from _children (list)", () => {
+  var e = new Entity({
+    children: [{ lState: 0 }, { lState: 1 }, { lState: 2 }, { lState: 3 }],
+  });
+  e.removeEntity(1);
+  assertEqual(e._children[0].lState, 0);
+  assertEqual(e._children[1].lState, 2);
+});
+
+testSuite.addTest("removeEntity returns removed Entity", () => {
+  var e = new Entity({
+    children: { foo: {} },
+  });
+  var foo = e._children.foo;
+  assertEqual(e.removeEntity("foo"), foo);
+});
+
+testSuite.addTest("removeEntity from list updates hierarchy for other children", () => {
+  var e = new Entity({
+    children: [{}, {}, {}, {}],
+  });
+  // Use Entity's children() getter
+  var children = e.children;
+  var foo = e.getEntity(0);
+
+  assertEqual(e.removeEntity(0), foo);
+  assertDeepEqual(e._children, children.slice(1));
+  assertValidHierarchy(e);
+});
+
+testSuite.addTest("removeEntity updates hierarchy for removed and returned Entity", () => {
+  var e = new Entity({
+    children: {
+      child: {
+        children: [
+          {
+            children: { child: {} },
+          },
+          {},
+        ],
+      },
+    },
+  });
+  var removedChild = e.removeEntity("child");
+  assertDeepEqual(removedChild._children[0]._children.child._path.tokens, [0, "child"]);
+});
+
+testSuite.addTest("removeEntity removes event listeners", () => {
+  var e = new Entity({
+    children: {
+      child: {
+        domEl: document.createElement("div"),
+        lState: {
+          clicked: 0,
+          focused: 0,
+        },
+        events: {
+          click() {this.lState.clicked++},
+          focus() {this.lState.focused++},
+        },
+      },
+    },
+  });
+  var child = e._children.child;
+  child.domEl.dispatchEvent(new Event("click"));
+  child.domEl.dispatchEvent(new Event("focus"));
+  assertEqual(child.lState.clicked, 1);
+  assertEqual(child.lState.focused, 1);
+
+  e.removeEntity("child");
+  
+  // Assert that event listeners have been removed
+  child.domEl.dispatchEvent(new Event("click"));
+  child.domEl.dispatchEvent(new Event("focus"));
+  // State shouldn't change because the event listeners should be removed by now
+  assertEqual(child.lState.clicked, 1);
+  assertEqual(child.lState.focused, 1);
+});
+
+testSuite.addTest("removeEntity fails on leaf Entity", () => {
+  var e = new Entity();
+  assertThrows(() => {
+    e.removeEntity(0);
+  }, "Cannot remove Entity from leaf Entity");
+});
+
+testSuite.addTest("removeEntity fails with invalid index token", () => {
+  var e = new Entity({
+    children: [{}],
+  });
+  assertThrows(() => {
+    e.removeEntity(0.2);
+  }, /Cannot remove Entity from list.+not a valid index/);
+});
+
+testSuite.addTest("removeEntity fails with out-of-range index", () => {
+  var e = new Entity({
+    children: [{}],
+  });
+  assertThrows(() => {
+    e.removeEntity(1);
+  }, /Cannot remove Entity from list.+out of range/);
+});
+
+testSuite.addTest("removeEntity fails with invalid property name", () => {
+  var e = new Entity({
+    children: {foo: {}},
+  });
+  assertThrows(() => {
+    e.removeEntity("0foo");
+  }, /Cannot remove Entity from group.+not a valid property name/);
+});
+
+testSuite.addTest("removeEntity fails if child found that matches token", () => {
+  var e = new Entity({
+    children: {foo: {}},
+  });
+  assertThrows(() => {
+    e.removeEntity("bar");
+  }, /Cannot remove Entity from group.+no child found with token/);
 });
 
 testSuite.addTest("Hierarchy is valid with deep nesting", () => {

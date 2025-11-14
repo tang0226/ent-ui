@@ -68,8 +68,8 @@ testSuite.addTest("Initialization fails with bad `entities` option type", () => 
   }, "cannot accept entities option of type");
 });
 
-// _linkEntity
-testSuite.addTest("_linkEntity adds _ui prop to Entity and all descendants", () => {
+// _addUiProp
+testSuite.addTest("_addUiProp adds _ui prop to Entity and all descendants", () => {
   const ui = new EntUI();
   const e = new Entity({
     children: {
@@ -79,7 +79,7 @@ testSuite.addTest("_linkEntity adds _ui prop to Entity and all descendants", () 
       child2: {},
     },
   });
-  ui._linkEntity(e);
+  ui._addUiProp(e);
   assertEntityLinkedToUI(e, ui);
 });
 
@@ -243,6 +243,99 @@ testSuite.addTest("addEntity fails when Entity is not an object or an Entity ins
     ui.addEntity("not-an-object-or-Entity", "entity");
   }, "input is not an object or Entity instance");
 });
+
+// removeEntity()
+testSuite.addTest("removeEntity removes Entity from UI's `entities` (parameter type: Entity)", () => {
+  var ui = new EntUI({
+    entities: {
+      entity: {
+        children: [{}, {}],
+      },
+    },
+  });
+  ui.removeEntity(ui._entities.entity);
+  assertDeepEqual(ui._entities, {});
+});
+
+testSuite.addTest("removeEntity removes Entity from UI's `entities` (parameter type: EntityPath type)", () => {
+  var ui = new EntUI({
+    entities: {
+      entity: {
+        children: [{lState: 0}, {lState: 1}],
+      },
+    },
+  });
+  ui.removeEntity("entity[0]");
+  assertEqual(ui._entities.entity._children[0].lState, 1);
+  assertEqual(ui._entities.entity._children.length, 1);
+});
+
+testSuite.addTest("removeEntity removes event listeners from top-level Entity's domEl", () => {
+  var ui = new EntUI({
+    entities: {
+      entity: {
+        domEl: document.createElement("div"),
+        lState: {
+          clicked: 0,
+        },
+        events: {
+          click() {this.lState.clicked++},
+        },
+      },
+    },
+  });
+  var e = ui.removeEntity("entity");
+  e.domEl.dispatchEvent(new Event("click"));
+  assertEqual(e.lState.clicked, 0);
+});
+
+testSuite.addTest("removeEntity embeds state from `_state` into returned Entity's `_state`", () => {
+  var ui = new EntUI({
+    entities: {
+      entity: {
+        state: 10,
+      },
+    },
+  });
+  var e = ui.removeEntity("entity");
+  assertDeepEqual(ui._state, {});
+  assertEqual(e._state, 10);
+});
+
+testSuite.addTest("removeEntity updates hierarchy of removed Entity", () => {
+  var ui = new EntUI({
+    entities: {
+      entity: {
+        children: [
+          {},
+          {
+            children: {a: {}, b: {}},
+          },
+        ],
+      },
+    },
+  });
+  var e = ui.removeEntity("entity");
+  assertEqual(e._token, null);
+  assertValidHierarchy(e);
+});
+
+testSuite.addTest("removeEntity fails on Entity that isn't part of this UI", () => {
+  var ui1 = new EntUI({
+    entities: {
+      entity1: {},
+    },
+  });
+  var ui2 = new EntUI({
+    entities: {
+      entity2: {},
+    },
+  });
+  assertThrows(() => {
+    ui1.removeEntity(ui2._entities.entity2);
+  }, "Cannot remove Entity from UI: Entity `_ui` property does not match this UI");
+});
+
 
 // getEntity()
 testSuite.addTest("getEntity succeeds on single-token path", () => {
