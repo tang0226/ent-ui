@@ -1,5 +1,5 @@
 import { Entity } from "./entity.js";
-import { EntityPath } from "./entity-path.js";
+import { ObjectPath } from "./object-path.js";
 
 export class EntUI {
   constructor(options = {}) {
@@ -40,11 +40,11 @@ export class EntUI {
     if (path === undefined) throw new Error("Cannot add Entity to UI: no path provided");
 
     if (newToken !== null) {
-      path = EntityPath.join(path, newToken);
+      path = ObjectPath.join(path, newToken);
     }
     else {
-      if (!(path instanceof EntityPath)) {
-        path = new EntityPath(path);
+      if (!(path instanceof ObjectPath)) {
+        path = new ObjectPath(path);
       }
     }
 
@@ -88,7 +88,7 @@ export class EntUI {
     if (traversalTokens.length == 0) {
       // Seed the entity's path with its string token, then propagate the paths through the hierarchy
       entity._token = token;
-      entity._path = new EntityPath([token]);
+      entity._path = new ObjectPath([token]);
       entity._updateHierarchy();
 
       // Add to top-level entities object
@@ -119,7 +119,7 @@ export class EntUI {
     }
     else {
       // Treat toRemove as a path
-      var tokens = (new EntityPath(toRemove, { deepCopy: false })).tokens;
+      var tokens = (new ObjectPath(toRemove, { deepCopy: false })).tokens;
       token = tokens[tokens.length - 1];
       if (tokens.length > 1) {
         parent = this.getEntity(tokens.slice(0, -1));
@@ -156,7 +156,7 @@ export class EntUI {
     }
     else {
       // Treat toDelete as a path
-      var tokens = (new EntityPath(toDelete, { deepCopy: false })).tokens;
+      var tokens = (new ObjectPath(toDelete, { deepCopy: false })).tokens;
       token = tokens[tokens.length - 1];
       if (tokens.length > 1) {
         parent = this.getEntity(tokens.slice(0, -1));
@@ -185,14 +185,14 @@ export class EntUI {
     var tokens = path;
 
     // Initialize tokens and validate path type
-    if (path instanceof EntityPath) {
+    if (path instanceof ObjectPath) {
       tokens = path.tokens;
     }
     else if (typeof path == "string") {
-      tokens = EntityPath.tokenize(path);
+      tokens = ObjectPath.tokenize(path);
     }
     else if (!Array.isArray(path)) {
-      throw new TypeError("Path variable must be an EntityPath, a string, or an array of tokens");
+      throw new TypeError("Path variable must be an ObjectPath, a string, or an array of tokens");
     }
 
     // Validate first token and initialize current entity var

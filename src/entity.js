@@ -1,4 +1,4 @@
-import { EntityPath } from "./entity-path.js";
+import { ObjectPath } from "./object-path.js";
 import {
   isArrowFunction,
   isValidParentOperator,
@@ -22,7 +22,7 @@ class EntityGetError extends Error {
 export class Entity {
   constructor(config = {}, { _parent = null, _token = null, _updateHierarchy = true } = {}) {
     // Path properties
-    this._path = new EntityPath();
+    this._path = new ObjectPath();
     this._parent = _parent;
     this._token = _token;
 
@@ -160,7 +160,7 @@ export class Entity {
 
   // Getters
   get path() {
-    return new EntityPath(this._path.tokens);
+    return new ObjectPath(this._path.tokens);
   }
 
   get parent() {
@@ -428,20 +428,20 @@ export class Entity {
     }
   }
 
-  // Gets the entity at a certain path (string, array of tokens, EntityPath instance);
+  // Gets the entity at a certain path (string, array of tokens, ObjectPath instance);
   // can also use parent operator here
   getEntity(path) {
-    // Validate path and initialize as an EntityPath instance
+    // Validate path and initialize as an ObjectPath instance
     if (path === undefined) throw new EntityGetError(this, "no path provided");
-    if (!(path instanceof EntityPath)) {
+    if (!(path instanceof ObjectPath)) {
       if (typeof path == "string" || Array.isArray(path)) {
-        path = new EntityPath(path);
+        path = new ObjectPath(path);
       }
       else if (typeof path == "number") {
-        path = new EntityPath([path]);
+        path = new ObjectPath([path]);
       }
       else {
-        throw new EntityGetError(this, `path {${path}} not an EntityPath, string, array, or index`);
+        throw new EntityGetError(this, `path {${path}} not an ObjectPath, string, array, or index`);
       }
     }
 
@@ -517,7 +517,7 @@ export class Entity {
   // For use internally and in other core classes
   _updateHierarchy() {
     if (this._parent) {
-      this._path = EntityPath.join(this._parent._path, this._token);
+      this._path = ObjectPath.join(this._parent._path, this._token);
     }
 
     if (this._children) {
@@ -549,7 +549,7 @@ export class Entity {
   _setAsHierarchyRoot() {
     this._parent = null;
     this._token = null;
-    this._path = new EntityPath([]);
+    this._path = new ObjectPath([]);
     this._updateHierarchy();
   }
 

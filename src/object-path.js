@@ -6,7 +6,7 @@ import {
   isValidParentOperator,
 } from "./utils/validation.js";
 
-export class EntityPath {
+export class ObjectPath {
   constructor(path, { deepCopy = true } = {}) {
     this.tokens = [];
 
@@ -15,7 +15,7 @@ export class EntityPath {
     }
 
     if (Array.isArray(path)) {
-      EntityPath.validateTokens(path);
+      ObjectPath.validateTokens(path);
 
       if (deepCopy) this.tokens = [...path]; // deep copy
       else this.tokens = path;
@@ -23,16 +23,16 @@ export class EntityPath {
       return;
     }
 
-    if (path instanceof EntityPath) return new EntityPath(path.tokens);
+    if (path instanceof ObjectPath) return new ObjectPath(path.tokens);
     if (typeof path === "string") {
-      this.tokens = EntityPath.tokenize(path);
+      this.tokens = ObjectPath.tokenize(path);
       return;
     }
     if (typeof path === "number") {
-      this.tokens = EntityPath.validateTokens([path]);
+      this.tokens = ObjectPath.validateTokens([path]);
       return;
     }
-    throw new TypeError("EntityPath constructor requires an EntityPath object, a string, or an array of tokens");
+    throw new TypeError("ObjectPath constructor requires an ObjectPath, a string, or an array of tokens");
   }
 
   toString() {
@@ -47,16 +47,16 @@ export class EntityPath {
   static join(...paths) {
     var newTokens = [];
     for (const p of paths) {
-      if (p instanceof EntityPath) {
+      if (p instanceof ObjectPath) {
         newTokens = [...newTokens, ...p.tokens];
         continue;
       }
       if (typeof p == "string") {
-        newTokens = [...newTokens, ...EntityPath.tokenize(p)];
+        newTokens = [...newTokens, ...ObjectPath.tokenize(p)];
         continue;
       }
       if (Array.isArray(p)) {
-        EntityPath.validateTokens(p);
+        ObjectPath.validateTokens(p);
         newTokens = [...newTokens, ...p];
         continue;
       }
@@ -65,15 +65,15 @@ export class EntityPath {
         newTokens = [...newTokens, p];
         continue;
       }
-      throw new TypeError(`Path {${p}} not of type EntityPath, string, Array, or number`);
+      throw new TypeError(`Path {${p}} not of type ObjectPath, string, Array, or number`);
     }
-    return new EntityPath(newTokens, { deepCopy: false });
+    return new ObjectPath(newTokens, { deepCopy: false });
   }
 
   static tokenize(str) {
     if (Array.isArray(str)) return str;
     if (typeof str != "string") {
-      throw new TypeError(`EntityPath.tokenize requires a string, not <${typeof str}>`);
+      throw new TypeError(`ObjectPath.tokenize requires a string, not <${typeof str}>`);
     }
 
     if (str.length == 0) return [];

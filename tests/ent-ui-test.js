@@ -1,4 +1,4 @@
-import { EntityPath } from "../../src/entity-path.js";
+import { ObjectPath } from "../../src/object-path.js";
 import { Entity } from "../../src/entity.js";
 import { EntUI } from "../../src/ent-ui.js";
 
@@ -147,7 +147,7 @@ testSuite.addTest("addEntity accepts different path types", () => {
   ui.addEntity(e, "topLevel");
   ui.addEntity({}, "topLevel.one[0]", "child1");
   assertTruthy(ui._entities.topLevel._children.one._children[0]._children.child1);
-  ui.addEntity({}, new EntityPath(["topLevel", "one", 0]), "child2");
+  ui.addEntity({}, new ObjectPath(["topLevel", "one", 0]), "child2");
   assertTruthy(ui._entities.topLevel._children.one._children[0]._children.child2);
   ui.addEntity({}, ["topLevel", "one", 0], "child3");
   assertTruthy(ui._entities.topLevel._children.one._children[0]._children.child3);
@@ -213,7 +213,7 @@ testSuite.addTest("addEntity fails when empty path is passed", () => {
 testSuite.addTest("addEntity fails when first path token is not a string", () => {
   var ui = new EntUI();
   assertThrows(() => {
-    ui.addEntity({}, new EntityPath([0]));
+    ui.addEntity({}, new ObjectPath([0]));
   }, /first path token.+is not a string/);
 });
 
@@ -257,7 +257,7 @@ testSuite.addTest("removeEntity removes Entity from UI's `entities` (parameter t
   assertDeepEqual(ui._entities, {});
 });
 
-testSuite.addTest("removeEntity removes Entity from UI's `entities` (parameter type: EntityPath type)", () => {
+testSuite.addTest("removeEntity removes Entity from UI's `entities` (parameter type: ObjectPath)", () => {
   var ui = new EntUI({
     entities: {
       entity: {
@@ -350,7 +350,7 @@ testSuite.addTest("deleteEntity removes Entity from UI's `entities` (parameter t
   assertDeepEqual(ui._entities, {});
 });
 
-testSuite.addTest("deleteEntity removes Entity from UI's `entities` (parameter type: EntityPath type)", () => {
+testSuite.addTest("deleteEntity removes Entity from UI's `entities` (parameter type: ObjectPath)", () => {
   var ui = new EntUI({
     entities: {
       entity: {
@@ -424,7 +424,7 @@ testSuite.addTest("getEntity accepts different path types", () => {
     },
   }, "topLevel");
   var e = ui._entities.topLevel._children.child2._children[1]._children[0];
-  assertEqual(ui.getEntity(new EntityPath("topLevel.child2[1][0]")), e);
+  assertEqual(ui.getEntity(new ObjectPath("topLevel.child2[1][0]")), e);
   assertEqual(ui.getEntity("topLevel.child2[1][0]"), e);
   assertEqual(ui.getEntity(["topLevel", "child2", 1, 0]), e);
 });
@@ -433,7 +433,7 @@ testSuite.addTest("getEntity fails with invalid path type", () => {
   var ui = new EntUI();
   assertThrows(() => {
     ui.getEntity(null);
-  }, "must be an EntityPath, a string, or an array of tokens");
+  }, "must be an ObjectPath, a string, or an array of tokens");
 });
 
 testSuite.addTest("getEntity fails with non-string first token", () => {

@@ -910,7 +910,7 @@ testSuite.addTest("getEntity fails with invalid path type", () => {
   var e = new Entity();
   assertThrows(() => {
     e.getEntity({});
-  }, "not an EntityPath, string, array, or index");
+  }, "not an ObjectPath, string, array, or index");
 });
 
 testSuite.addTest("getEntity fails with excess parent operator", () => {
