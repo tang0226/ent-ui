@@ -562,13 +562,13 @@ testSuite.addTest("addEntity fails if Entity to add already has a parent", () =>
   }, "already exists");
 });
 
-testSuite.addTest("addEntity fails when adding to list at non-number index", () => {
+testSuite.addTest("addEntity fails when adding to list at invalid index", () => {
   var e = new Entity({
     children: [],
   });
   assertThrows(() => {
     e.addEntity({}, "NaN");
-  }, "Token to add an Entity must be a number");
+  }, "token must be a valid index when adding to a list");
 });
 
 testSuite.addTest("addEntity fails when Entity to add already has a parent", () => {
@@ -582,7 +582,7 @@ testSuite.addTest("addEntity fails when Entity to add already has a parent", () 
   });
   assertThrows(() => {
     e2.addEntity(e1._children.child, "child");
-  }, "Entity already has a parent");
+  }, "Entity to add already has a parent");
 });
 
 testSuite.addTest("addEntity fails when a non-object is passed", () => {
@@ -697,7 +697,7 @@ testSuite.addTest("removeEntity fails with invalid index token", () => {
   });
   assertThrows(() => {
     e.removeEntity(0.2);
-  }, /Cannot remove Entity from list.+not a valid index/);
+  }, /Cannot remove Entity from.+not a valid index/);
 });
 
 testSuite.addTest("removeEntity fails with out-of-range index", () => {
@@ -706,7 +706,7 @@ testSuite.addTest("removeEntity fails with out-of-range index", () => {
   });
   assertThrows(() => {
     e.removeEntity(1);
-  }, /Cannot remove Entity from list.+out of range/);
+  }, /Cannot remove Entity from.+out of range/);
 });
 
 testSuite.addTest("removeEntity fails with invalid property name", () => {
@@ -715,7 +715,7 @@ testSuite.addTest("removeEntity fails with invalid property name", () => {
   });
   assertThrows(() => {
     e.removeEntity("0foo");
-  }, /Cannot remove Entity from group.+not a valid property name/);
+  }, /Cannot remove Entity from.+not a valid property name/);
 });
 
 testSuite.addTest("removeEntity fails if no child found that matches token", () => {
@@ -724,7 +724,7 @@ testSuite.addTest("removeEntity fails if no child found that matches token", () 
   });
   assertThrows(() => {
     e.removeEntity("bar");
-  }, /Cannot remove Entity from group.+no child found with token/);
+  }, /Cannot remove Entity from.+no child found with token/);
 });
 
 
@@ -803,7 +803,7 @@ testSuite.addTest("deleteEntity fails with invalid index token", () => {
   });
   assertThrows(() => {
     e.deleteEntity(0.2);
-  }, /Cannot delete Entity from list.+not a valid index/);
+  }, /Cannot delete Entity from.+not a valid index/);
 });
 
 testSuite.addTest("deleteEntity fails with out-of-range index", () => {
@@ -812,7 +812,7 @@ testSuite.addTest("deleteEntity fails with out-of-range index", () => {
   });
   assertThrows(() => {
     e.deleteEntity(1);
-  }, /Cannot delete Entity from list.+out of range/);
+  }, /Cannot delete Entity from.+out of range/);
 });
 
 testSuite.addTest("deleteEntity fails with invalid property name", () => {
@@ -821,7 +821,7 @@ testSuite.addTest("deleteEntity fails with invalid property name", () => {
   });
   assertThrows(() => {
     e.deleteEntity("0foo");
-  }, /Cannot delete Entity from group.+not a valid property name/);
+  }, /Cannot delete Entity from.+not a valid property name/);
 });
 
 testSuite.addTest("deleteEntity fails if no child found that matches token", () => {
@@ -830,7 +830,7 @@ testSuite.addTest("deleteEntity fails if no child found that matches token", () 
   });
   assertThrows(() => {
     e.deleteEntity("bar");
-  }, /Cannot delete Entity from group.+no child found with token/);
+  }, /Cannot delete Entity from.+no child found with token/);
 });
 
 

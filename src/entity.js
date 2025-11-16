@@ -6,18 +6,6 @@ import {
   isValidIndex,
 } from "./utils/validation.js";
 
-class InitError extends Error {
-  constructor(msg) {
-    super(`Cannot initialize Entity: ${msg}`);
-  }
-}
-
-class EntityGetError extends Error {
-  constructor(src, msg) {
-    super(`getEntity() from Entity "${src._path.toString()}": ${msg}`);
-  }
-}
-
 
 export class Entity {
   constructor(config = {}, { _parent = null, _token = null, _updateHierarchy = true } = {}) {
@@ -31,14 +19,14 @@ export class Entity {
     if (
       this._domEl !== null && this._domEl !== undefined &&
       !(this._domEl instanceof Element)
-    ) throw new InitError("domEl property is not a DOM element");
+    ) throw this._constructorError("domEl property is not a DOM element");
 
     // Attributes
     this.attrs = config.attrs || {};
     if (
       this.attrs !== null && this.attrs !== undefined &&
       typeof this.attrs !== "object"
-    ) throw new InitError("attributes property is not an object");
+    ) throw this._constructorError("attributes property is not an object");
 
     // Temp state
     this._state = null;
@@ -57,18 +45,18 @@ export class Entity {
     this.validators = {};
     if (validators) {
       if (typeof validators !== "object") {
-        throw new InitError("validators property is not an object");
+        throw this._constructorError("validators property is not an object");
       }
 
       for (const [name, func] of Object.entries(validators)) {
         if (typeof func !== "function") {
-          throw new InitError(`validator "${name}" is not a function`);
+          throw this._constructorError(`validator "${name}" is not a function`);
         }
 
         // Check if the function is an arrow (=>) function, which cannot be bound with
         // a specific `this` value
         if (isArrowFunction(func)) {
-          throw new InitError(`validator "${name}" cannot be an arrow function`)
+          throw this._constructorError(`validator "${name}" cannot be an arrow function`)
         }
 
         this.validators[name] = func.bind(this);
@@ -79,18 +67,18 @@ export class Entity {
     this.utils = {};
     if (config.utils) {
       if (typeof config.utils !== "object") {
-        throw new InitError("utils property is not an object");
+        throw this._constructorError("utils property is not an object");
       }
 
       for (const [name, func] of Object.entries(config.utils)) {
         if (typeof func !== "function") {
-          throw new InitError(`utility "${name}" is not a function`);
+          throw this._constructorError(`utility "${name}" is not a function`);
         }
 
         // Check if the function is an arrow (=>) function, which cannot be bound with
         // a specific `this` value
         if (isArrowFunction(func)) {
-          throw new InitError(`utility "${name}" cannot be an arrow function`)
+          throw this._constructorError(`utility "${name}" cannot be an arrow function`)
         }
 
         this.utils[name] = func.bind(this);
@@ -140,7 +128,7 @@ export class Entity {
     this._events = config.events || {};
     if (this._domEl) {
       if (typeof this._events !== "object") {
-        throw new InitError("events property is not an object");
+        throw this._constructorError("events property is not an object");
       }
 
       if (Object.keys(this._events).length) {
@@ -197,10 +185,10 @@ export class Entity {
   // Associates the Entity with a DOM element; should only be run once, and only if no DOM element was passed at initialization
   setDomEl(domEl) {
     if (this._domEl) {
-      throw new Error(`Cannot set DOM element of Entity "${this._path.toString()}": Entity already has a DOM element`);
+      throw this._setDomElError(`Entity already has a DOM element`);
     }
     if (!(domEl instanceof Element)) {
-      throw new TypeError(`Cannot set DOM element of Entity "${this._path.toString()}": ${domEl} is not an Element`);
+      throw this._setDomElError(`${domEl} is not an Element`);
     }
 
     this._domEl = domEl;
@@ -209,13 +197,13 @@ export class Entity {
 
   addEventListener(event, handler) {
     if (!this._domEl) {
-      throw new Error(`Cannot add event listener to Entity "${this._path.toString()}": Entity has no element`);
+      throw this._addEventListenerError(`Entity has no element`);
     }
     if (typeof handler != "function") {
-      throw new Error(`Cannot add event listener to Entity "${this._path.toString()}": event handler must be a function`);
+      throw this._addEventListenerError(`event handler must be a function`);
     }
     if (isArrowFunction(handler)) {
-      throw new Error(`Cannot add event listener to Entity "${this._path.toString()}": event handler cannot be an arrow function`);
+      throw this._addEventListenerError(`event handler cannot be an arrow function`);
     }
     const bound = handler.bind(this);
     this._domEl.addEventListener(event, bound);
@@ -230,17 +218,17 @@ export class Entity {
   // (accepts event type and original unbound handler)
   removeEventListener(event, handler) {
     if (!this._domEl) {
-      throw new Error(`Cannot remove event listener from Entity "${this._path.toString()}": Entity has no element`);
+      throw this._removeEventListenerError(`Entity has no element`);
     }
 
     const listeners = this._events[event];
     if (listeners === undefined) {
-      throw new Error(`Cannot remove event listener from Entity "${this._path.toString()}": no event listener found for "${event}" event`);
+      throw this._addEventListenerError(`no event listener found for "${event}" event`);
     }
 
     const i = listeners.findIndex(l => l.handler === handler);
     if (i === -1) {
-      throw new Error(`Cannot remove event listener from Entity "${this._path.toString()}": handler doesn't match any currently present`);
+      throw this._addEventListenerError(`handler doesn't match any currently present`);
     }
     const listener = listeners.splice(i, 1);
     this._domEl.removeEventListener(event, listener[0].bound);
@@ -248,7 +236,7 @@ export class Entity {
 
   removeAllEventListeners() {
     if (!this._domEl) {
-      throw new Error(`Cannot remove event listeners from Entity "${this._path.toString()}": Entity has no element`);
+      throw this._removeAllEventListenersError(`Entity has no element`);
     }
     for (const [event, handlers] of Object.entries(this._events)) {
       for (const handler of handlers) {
@@ -261,7 +249,7 @@ export class Entity {
   // entObj can be either a config object or an Entity instance
   addEntity(entObj, token, { _updateHierarchy = true, _handleUiUpdates = true } = {}) {
     if (this._type == "leaf") {
-      throw new TypeError("Cannot add Entity to leaf Entity");
+      throw this._addEntityError("Cannot add Entity to leaf Entity");
     }
 
     if (token === undefined || token === null) {
@@ -269,20 +257,20 @@ export class Entity {
         token = this._children.length;
       }
       else {
-        throw new Error("Cannot add Entity to group Entity: no token provided");
+        throw this._addEntityError("no token provided");
       }
     }
 
     // Token validation
     if (this._type == "group") {
       if (this._children[token]) {
-        throw new ReferenceError(`Error adding child ${token} to group "${this._path.toString()}": already exists`);
+        throw this._addEntityError(`child "${token} already exists in this group`);
       }
     }
 
     if (this._type == "list") {
-      if (typeof token != "number") {
-        throw new TypeError("Token to add an Entity must be a number when adding to a list");
+      if (!isValidIndex(token)) {
+        throw this._addEntityError("token must be a valid index when adding to a list");
       }
     }
 
@@ -292,10 +280,10 @@ export class Entity {
       entity = entObj;
       // Check if the entity already has a UI that doesn't match self's
       if (entity._ui && entity._ui !== this._ui) {
-        throw new Error(`Cannot add entity to ${this._type} "${this._path.toString()}": Entity is already in another UI`);
+        throw this._addEntityError(`Entity to add is already in another UI`);
       }
       if (entity._parent) {
-        throw new Error(`Cannot add entity to ${this._type} "${this._path.toString()}": Entity already has a parent`);
+        throw this._addEntityError(`Entity to add already has a parent`);
       }
 
       // Set this Entity's parent and token props
@@ -304,7 +292,7 @@ export class Entity {
     }
     else {
       if (typeof entObj != "object") {
-        throw new TypeError(`Cannot add Entity to ${this._type} "${this._path.toString()}": Entity to add is not an object or Entity`);
+        throw this._addEntityError(`Entity to add is not an object or an Entity`);
       }
 
       // If the entity is a config object, initialize it,
@@ -323,7 +311,7 @@ export class Entity {
     // Recursively update hierarchy if called for
     // (only skipped during Entity constructor, since it only needs to be called once in the parent Entity)
     if (_updateHierarchy) {
-      entity._updateHierarchy();
+      this._updateHierarchy();
     }
 
     // connect the new Entity to self's UI object, if applicable
@@ -336,7 +324,7 @@ export class Entity {
 
   removeEntity(token, { _handleUiUpdates = true } = {}) {
     if (this._type === "leaf") {
-      throw new Error(`Cannot remove Entity from leaf Entity "${this.path.toString()}"`);
+      throw this._removeEntityError(`Cannot remove Entity from leaf Entity "${this.path.toString()}"`);
     }
 
     // Entity to remove
@@ -345,10 +333,10 @@ export class Entity {
     // Remove child Entity from hierarchy
     if (this._type === "list") {
       if (!isValidIndex(token)) {
-        throw new Error(`Cannot remove Entity from list ${this.path.toString()}: token "${token}" is not a valid index`);
+        throw this._removeEntityError(`token "${token}" is not a valid index`);
       }
       if (token >= this._children.length) {
-        throw new Error(`Cannot remove Entity from list ${this.path.toString()}: index ${token} is out of range`);
+        throw this._removeEntityError(`index ${token} is out of range`);
       }
 
       ent = this._removeEntityFromHierarchy(token);
@@ -356,11 +344,11 @@ export class Entity {
 
     if (this._type === "group") {
       if (!isValidProp(token)) {
-        throw new Error(`Cannot remove Entity from group "${this.path.toString()}": token "${token}" is not a valid property name`);
+        throw this._removeEntityError(`token "${token}" is not a valid property name`);
       }
 
       if (this._children[token] === undefined) {
-        throw new Error(`Cannot remove Entity from group "${this.path.toString()}": no child found with token ${token}`);
+        throw this._removeEntityError(`no child found with token ${token}`);
       }
 
       ent = this._removeEntityFromHierarchy(token);
@@ -387,7 +375,7 @@ export class Entity {
   // Like removeEntity, but does not return the Entity or prepare it to stand alone
   deleteEntity(token, { _handleUiUpdates = true } = {}) {
     if (this._type === "leaf") {
-      throw new Error(`Cannot delete Entity from leaf Entity "${this.path.toString()}"`);
+      throw this._deleteEntityError(`Cannot delete Entity from leaf Entity`);
     }
 
     // Entity to remove
@@ -396,10 +384,10 @@ export class Entity {
     // Remove child Entity from hierarchy
     if (this._type === "list") {
       if (!isValidIndex(token)) {
-        throw new Error(`Cannot delete Entity from list ${this.path.toString()}: token "${token}" is not a valid index`);
+        throw this._deleteEntityError(`token "${token}" is not a valid index`);
       }
       if (token >= this._children.length) {
-        throw new Error(`Cannot delete Entity from list ${this.path.toString()}: index ${token} is out of range`);
+        throw this._deleteEntityError(`index ${token} is out of range`);
       }
 
       ent = this._removeEntityFromHierarchy(token);
@@ -407,11 +395,11 @@ export class Entity {
 
     if (this._type === "group") {
       if (!isValidProp(token)) {
-        throw new Error(`Cannot delete Entity from group "${this.path.toString()}": token "${token}" is not a valid property name`);
+        throw this._deleteEntityError(`token "${token}" is not a valid property name`);
       }
 
       if (this._children[token] === undefined) {
-        throw new Error(`Cannot delete Entity from group "${this.path.toString()}": no child found with token ${token}`);
+        throw this._deleteEntityError(`no child found with token ${token}`);
       }
 
       ent = this._removeEntityFromHierarchy(token);
@@ -432,7 +420,7 @@ export class Entity {
   // can also use parent operator here
   getEntity(path) {
     // Validate path and initialize as an ObjectPath instance
-    if (path === undefined) throw new EntityGetError(this, "no path provided");
+    if (path === undefined) throw this._getEntityError("no path provided");
     if (!(path instanceof ObjectPath)) {
       if (typeof path == "string" || Array.isArray(path)) {
         path = new ObjectPath(path);
@@ -441,7 +429,7 @@ export class Entity {
         path = new ObjectPath([path]);
       }
       else {
-        throw new EntityGetError(this, `path {${path}} not an ObjectPath, string, array, or index`);
+        throw this._getEntityError(`path {${path}} not an ObjectPath, string, array, or index`);
       }
     }
 
@@ -454,7 +442,7 @@ export class Entity {
       // Traverse up the tree according to the number of ^
       for (let j = 0; j < tokens[0].length; j++) {
         if (!entity._parent) {
-          throw new EntityGetError(this, `parent operator error at index ${j}: Entity "${entity._path.toString()}" has no parent`);
+          throw this._getEntityError(`parent operator error at index ${j}: Entity has no parent`);
         }
         entity = entity._parent;
       }
@@ -465,14 +453,14 @@ export class Entity {
 
     for (; i < tokens.length; i++) {
       if (!entity._children) {
-        throw new EntityGetError(this, `Entity "${entity._path.toString()}" has no children`);
+        throw this._getEntityError(`Entity ${entity._path.toString()} has no children`);
       }
 
       const token = tokens[i];
       let prevEntity = entity;
       entity = entity._children[token];
       if (entity === undefined) {
-        throw new EntityGetError(this, `Entity "${prevEntity._path.toString()}" has no child with token "${token}"`);
+        throw this._getEntityError(`Entity "${prevEntity._path.toString()}" has no child with token "${token}"`);
       }
     }
 
@@ -566,5 +554,41 @@ export class Entity {
         c._setToken(token, index);
       });
     }
+  }
+
+  _constructorError(msg) {
+    return new Error(`Cannot initialize Entity: ${msg}`);
+  }
+
+  _setDomElError(msg) {
+    return new Error(`Cannot set DOM element of Entity "${this._path.toString()}": ${msg}`);
+  }
+
+  _addEventListenerError(msg) {
+    return new Error(`Cannot add event listener to Entity "${this._path.toString()}": ${msg}`);
+  }
+
+  _removeEventListenerError(msg) {
+    return new Error(`Cannot remove event listener from Entity "${this._path.toString()}": ${msg}`);
+  }
+
+  _removeAllEventListenersError(msg) {
+    return new Error(`Cannot remove all event listeners from Entity "${this._path.toString()}": ${msg}`);
+  }
+
+  _addEntityError(msg) {
+    return new Error(`Cannot add Entity to "${this._path.toString()}": ${msg}`);
+  }
+
+  _removeEntityError(msg) {
+    return new Error(`Cannot remove Entity from "${this._path.toString()}": ${msg}`);
+  }
+
+  _deleteEntityError(msg) {
+    return new Error(`Cannot delete Entity from "${this._path.toString()}": ${msg}`);
+  }
+
+  _getEntityError(msg) {
+    return new Error(`Cannot get Entity from "${this._path.toString()}": ${msg}`);
   }
 }
