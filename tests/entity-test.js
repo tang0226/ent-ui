@@ -903,7 +903,7 @@ testSuite.addTest("getEntity fails when path not provided", () => {
   var e = new Entity({ children: [{}] });
   assertThrows(() => {
     e.getEntity();
-  }, "no path provided");
+  }, "Cannot accept ObjectPath with undefined input");
 });
 
 testSuite.addTest("getEntity fails with invalid path type", () => {

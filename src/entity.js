@@ -419,19 +419,7 @@ export class Entity {
   // Gets the entity at a certain path (string, array of tokens, ObjectPath instance);
   // can also use parent operator here
   getEntity(path) {
-    // Validate path and initialize as an ObjectPath instance
-    if (path === undefined) throw this._getEntityError("no path provided");
-    if (!(path instanceof ObjectPath)) {
-      if (typeof path == "string" || Array.isArray(path)) {
-        path = new ObjectPath(path);
-      }
-      else if (typeof path == "number") {
-        path = new ObjectPath([path]);
-      }
-      else {
-        throw this._getEntityError(`path {${path}} not an ObjectPath, string, array, or index`);
-      }
-    }
+    path = ObjectPath.normalize(path, true);
 
     const tokens = path.tokens;
     if (tokens.length == 0) return this;

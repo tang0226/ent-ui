@@ -182,18 +182,7 @@ export class EntUI {
   }
 
   getEntity(path) {
-    var tokens = path;
-
-    // Initialize tokens and validate path type
-    if (path instanceof ObjectPath) {
-      tokens = path.tokens;
-    }
-    else if (typeof path == "string") {
-      tokens = ObjectPath.tokenize(path);
-    }
-    else if (!Array.isArray(path)) {
-      throw new TypeError("Path variable must be an ObjectPath, a string, or an array of tokens");
-    }
+    var tokens = ObjectPath.normalize(path).tokens;
 
     // Validate first token and initialize current entity var
     if (typeof tokens[0] != "string") {

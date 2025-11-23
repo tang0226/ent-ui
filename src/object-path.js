@@ -139,6 +139,24 @@ export class ObjectPath {
     return tokens;
   }
 
+  static normalize(input, tokenRequired = false) {
+    if (input === undefined) {
+      if (tokenRequired) throw new Error("Cannot accept ObjectPath with undefined input");
+      return new ObjectPath();
+    }
+    if (input instanceof ObjectPath) return input;
+
+    if (typeof input == "string" || Array.isArray(input)) {
+      return new ObjectPath(input);
+    }
+    
+    if (typeof input == "number") {
+      return new ObjectPath([input]);
+    }
+
+    throw new Error(`Cannot accept Object path because input {${input}} is not an ObjectPath, string, array, or index`);
+  }
+
   static validateTokens(tokens) {
     tokens.forEach((token, index) => {
       if (typeof token == "number") {

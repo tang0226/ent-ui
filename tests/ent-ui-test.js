@@ -433,7 +433,7 @@ testSuite.addTest("getEntity fails with invalid path type", () => {
   var ui = new EntUI();
   assertThrows(() => {
     ui.getEntity(null);
-  }, "must be an ObjectPath, a string, or an array of tokens");
+  }, /Cannot accept Object path because input.+ is not an ObjectPath, string, array, or index/);
 });
 
 testSuite.addTest("getEntity fails with non-string first token", () => {
