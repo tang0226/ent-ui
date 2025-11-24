@@ -182,6 +182,13 @@ export class Entity {
     return this._ui;
   }
 
+  get state() {
+    if (this._ui) {
+      return Object.freeze(this._uiStateObj.state);
+    }
+    return Object.freeze(this._state);
+  }
+
   // Associates the Entity with a DOM element; should only be run once, and only if no DOM element was passed at initialization
   setDomEl(domEl) {
     if (this._domEl) {
