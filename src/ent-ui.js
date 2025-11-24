@@ -214,6 +214,10 @@ export class EntUI {
     return entity;
   }
 
+  getState(path) {
+    return this.getEntity(path).state;
+  }
+
 
   // Recursively adds the `ui` prop to an entity and all its descendants
   _addUiProp(entity) {
