@@ -91,7 +91,6 @@ export class EntUI {
           this._entities[token] = entity;
         }
         else {
-          console.log("using default index to add to top-level ent");
           // otherwise, try adding TO that ent. using a default token (treat it as a list parent)
           this.getEntity([token]).addEntity(entity, null, {_handleUiUpdates: false});
         }
