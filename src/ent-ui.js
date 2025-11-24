@@ -33,20 +33,12 @@ export class EntUI {
   // * Can add a top-level Entity to the UI or a sub-Entity to an existing Entity, depending on the path params
   // * entObj can be either a config object or an Entity instance
   // * `path` can be the full path of the new Entity (including the new token),
-  //   OR it can be the path fo the Entity to add to, and `newToken` can be the token of the new Entity.
-  //   Either way, `path` and `newToken` are joined, and the last token in the combined path is taken as the new Entity's
-  addEntity(entObj, path, newToken = null) {
+  //   OR it can be the path fo the Entity to add to, and `specToken` can be the token of the new Entity.
+  addEntity(entObj, path, specToken = null) {
     if (entObj === undefined) throw new Error("Cannot add Entity to UI: Entity instance / config object not provided");
     if (path === undefined) throw new Error("Cannot add Entity to UI: no path provided");
 
-    if (newToken !== null) {
-      path = ObjectPath.join(path, newToken);
-    }
-    else {
-      if (!(path instanceof ObjectPath)) {
-        path = new ObjectPath(path);
-      }
-    }
+    path = ObjectPath.normalize(path);
 
     const tokens = path.tokens;
 
@@ -54,7 +46,7 @@ export class EntUI {
       throw new Error(`Cannot add Entity to UI: empty path`);
     }
     if (typeof tokens[0] != "string") {
-      throw new TypeError(`Cannot add Entity to UI: first path token {${path.tokens[0]}} is not a string`);
+      throw new TypeError(`Cannot add Entity to UI: first path token {${tokens[0]}} is not a string`);
     }
 
     // entObj validation
@@ -79,29 +71,42 @@ export class EntUI {
       entity = new Entity(entObj, { _updateHierarchy: false });
     }
 
-    // Tokens that reach the entity to which we're adding (empty if we're adding a top-level ent)
-    const traversalTokens = tokens.slice(0, -1);
-    // final token (token to give `entObj` when adding)
-    var token = tokens[tokens.length - 1];
-
-    // See if we are adding a top-level entity
-    if (traversalTokens.length == 0) {
-      // Seed the entity's path with its string token, then propagate the paths through the hierarchy
-      entity._token = token;
-      entity._path = new ObjectPath([token]);
-      entity._updateHierarchy();
-
-      // Add to top-level entities object
-      this._entities[token] = entity;
+    if (specToken !== null) {
+      this.getEntity(path).addEntity(entity, specToken, {_handleUiUpdates: false});
     }
+
     else {
-      // Handle ambiguous case (adding to list of lists): treat any final index token as a traversal token unless
-      // specified as the new token for inserting into a list
-      if (typeof token === "number" && newToken !== token) {
-        traversalTokens.push(token);
-        token = null;
+      // Tokens that reach the entity to which we're adding (empty if we're adding a top-level ent)
+      var traversalTokens = tokens.slice(0, -1);
+      // final token (token to give `entObj` when adding)
+      var token = tokens[tokens.length - 1];
+
+      if (traversalTokens.length === 0) {
+        // add Entity normally if an Entity does not yet exist at this token
+        if (!this._entities[token]) {
+          entity._token = token;
+          entity._path = new ObjectPath([token]);
+          entity._updateHierarchy();
+
+          this._entities[token] = entity;
+        }
+        else {
+          console.log("using default index to add to top-level ent");
+          // otherwise, try adding TO that ent. using a default token (treat it as a list parent)
+          this.getEntity([token]).addEntity(entity, null, {_handleUiUpdates: false});
+        }
       }
-      this.getEntity(traversalTokens).addEntity(entity, token, { _handleUiUpdates: false });
+      else {
+        var traversalRes = this.getEntity(traversalTokens);
+        // If an Entity already exists at this token, treat it as a list parent and add to it with a default index token
+        if (traversalRes._children[token]) {
+          traversalRes._children[token].addEntity(entity, null, {_handleUiUpdates: false});
+        }
+        else {
+          // Otherwise, add the ent normally
+          traversalRes.addEntity(entity, token, {_handleUiUpdates: false});
+        }
+      }
     }
 
     this._connectEntity(entity);
@@ -252,6 +257,9 @@ export class EntUI {
       // (which refers to the correct location in `this._state`)
       stateObj.state = entity._state;
       entity._state = null;
+      
+      // Add a pointer to the entity's state object in this EntUI
+      entity._uiStateObj = stateObj;
     }
 
     if (entity._children) {
@@ -275,12 +283,11 @@ export class EntUI {
     if (!parentType || parentType === "group") {
       stateObj = parentStateObj[entity._token];
       delete parentStateObj[entity._token];
-      return stateObj;
     }
     else if (parentType === "list") {
       stateObj = parentStateObj.children.splice(entity._token, 1)[0];
-      return stateObj;
     }
+    return stateObj;
   }
 
   // Opposite of state extraction: when an Entity is removed, remove its corresponding
@@ -291,6 +298,7 @@ export class EntUI {
     }
 
     entity._state = stateObj.state;
+    entity._uiStateObj = null;
 
     if (entity._children) {
       entity.forEachChild((c, token) => {

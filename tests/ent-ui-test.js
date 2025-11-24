@@ -137,6 +137,20 @@ testSuite.addTest("addEntity with deep path extracts state properly", () => {
   assertEqual(ui._state.topLevel.children.child.state.bar, 5);
 });
 
+testSuite.addTest("addEntity adds _uiStateObj reference to the Entity", () => {
+  var ui = new EntUI({
+    entities: {
+      topLevel: {
+        children: [
+          {},
+        ],
+      },
+    },
+  });
+  ui.addEntity({state: "hello world"}, "topLevel");
+  assertEqual(ui.getEntity("topLevel[1]")._uiStateObj.state, "hello world");
+});
+
 testSuite.addTest("addEntity accepts different path types", () => {
   var ui = new EntUI();
   var e = new Entity({
@@ -187,6 +201,23 @@ testSuite.addTest("addEntity treats final index token as traversal token unless 
   // to "entity" at index 0
   ui.addEntity({ lState: "outer" }, "entity", 0);
   assertEqual(ui._entities.entity._children[0].lState, "outer");
+});
+
+testSuite.addTest("addEntity uses default index token if full target path already exists (treat as list parent)", () => {
+  var ui = new EntUI({
+    entities: {
+      topLevel: {
+        children: [
+          {
+            children: [{}],
+          },
+        ],
+      },
+    },
+  });
+
+  ui.addEntity({ lState: "second-child" }, "topLevel");
+  assertEqual(ui._entities.topLevel._children[1].lState, "second-child");
 });
 
 testSuite.addTest("addEntity fails when no entObj is passed", () => {
