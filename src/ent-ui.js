@@ -218,6 +218,35 @@ export class EntUI {
   }
 
 
+
+  // Internal EntUI state setting: just modifies authoritative state
+  setState(specifier, ...setParams) {
+    var entity;
+    if (specifier instanceof Entity) {
+      entity = specifier;
+
+      // fail if the Entity doesn't belong to this UI
+      if (entity._ui !== this) return false;
+    }
+    else {
+      // assume specifier is a path
+      entity = this.getEntity(specifier);
+    }
+
+    // Entity's mutable state object reference
+    const stateObj = entity._uiStateObj;
+    
+    if (setParams.length > 1) {
+      stateObj.state[setParams[0]] = setParams[1];
+    }
+    else {
+      stateObj.state = setParams[0];
+    }
+
+    return true;
+  }
+
+
   // Recursively adds the `ui` prop to an entity and all its descendants
   _addUiProp(entity) {
     entity._ui = this;

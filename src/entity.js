@@ -189,6 +189,14 @@ export class Entity {
     return Object.freeze(this._state);
   }
 
+  setState(...setParams) {
+    if (!this._ui) {
+      throw this._setStateError(`Entity is not part of a UI`);
+    }
+
+    this._ui.setState(this, ...setParams);
+  }
+
   // Associates the Entity with a DOM element; should only be run once, and only if no DOM element was passed at initialization
   setDomEl(domEl) {
     if (this._domEl) {
@@ -553,6 +561,10 @@ export class Entity {
 
   _constructorError(msg) {
     return new Error(`Cannot initialize Entity: ${msg}`);
+  }
+
+  _setStateError(msg) {
+    return new Error(`Cannot set state of Entity "${this._path.toString()}": ${msg}`);
   }
 
   _setDomElError(msg) {
