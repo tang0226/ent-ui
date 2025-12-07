@@ -35,31 +35,54 @@ export class Entity {
     }
 
     // Local state
-    this.lState = null;
+    this.lState = {};
     if (config.lState !== null && config.lState !== undefined) {
       this.lState = config.lState;
     }
 
     // Validators
     const validators = config.validators;
-    this.validators = {};
+    this._validators = {};
     if (validators) {
-      if (typeof validators !== "object") {
-        throw this._constructorError("validators property is not an object");
+      if (Array.isArray(validators)) {
+        this._validators._root = [];
+        for (const v of validators) {
+          if (typeof v != "function") {
+            throw this._constructorError(`validator is not a function`);
+          }
+          this._validators._root.push(v.bind(this));
+        }
+      }
+      else if (typeof validators === "object") {
+        for (const [prop, vs] of Object.entries(validators)) {
+
+          if (Array.isArray(vs)) {
+            this._validators[prop] = [];
+            for (const v of vs) {
+              if (typeof v !== "function") {
+                throw this._constructorError(`validator for state prop "${prop}" is not a function`);
+              }
+              this._validators[prop].push(v.bind(this));
+            }
+          }
+
+          else if (typeof vs === "function") {
+            this._validators[prop] = vs.bind(this);
+          }
+
+          else {
+            throw this._constructorError(`validator(s) for state prop "${prop}" is not a function or array`);
+          }
+
+        }
       }
 
-      for (const [name, func] of Object.entries(validators)) {
-        if (typeof func !== "function") {
-          throw this._constructorError(`validator "${name}" is not a function`);
-        }
-
-        // Check if the function is an arrow (=>) function, which cannot be bound with
-        // a specific `this` value
-        if (isArrowFunction(func)) {
-          throw this._constructorError(`validator "${name}" cannot be an arrow function`)
-        }
-
-        this.validators[name] = func.bind(this);
+      else if (typeof validators === "function") {
+        this._validators._root = validators.bind(this);
+      }
+      
+      else {
+        throw this._constructorError("validators property is not a function or an object");
       }
     }
 

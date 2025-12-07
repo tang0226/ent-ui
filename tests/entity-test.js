@@ -100,54 +100,82 @@ testSuite.addTest("constructor: validators initialize", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
     validators: {
-      checkText() {
+      test() {
         return this.domEl.innerText == "test text";
       },
     }
   });
-  assertType(e.validators.checkText, "function");
+  assertType(e._validators.test, "function");
 });
+
+testSuite.addTest("constructor: validators initialize with various prop shapes", () => {
+  var e = new Entity({
+    validators: {
+      test: () => false,
+      test2: [
+        () => false,
+        () => false,
+      ],
+    },
+  });
+  e = new Entity({
+    validators: () => false
+  });
+  e = new Entity({
+    validators: [
+      () => true,
+      () => false,
+    ],
+  });
+});
+
+testSuite.addTest("constructor: fails with non-function validators", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      validators: {
+        prop: [
+          "not-a-function",
+        ]
+      }
+    });
+  }, /validator for state prop.+ is not a function/);
+});
+
+testSuite.addTest("constructor: fails if a sub-prop of validators is not an array or a function", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      validators: {
+        prop: "not-an-array-or-function",
+      },
+    });
+  }, /validator\(s\) for state prop.+ is not a function or array/);
+});
+
+testSuite.addTest("constructor: root validator init fails if validators prop is not an function or array", () => {
+  assertThrows(() => {
+    var e = new Entity({
+      validators: "not-an-object-or-function",
+    });
+  }, "validators property is not a function or an object");
+});
+
 
 testSuite.addTest("Validators operate", () => {
   var e = new Entity({
     domEl: document.createElement("div"),
     validators: {
-      checkText() {
-        return this.domEl.innerText == "test text";
-      },
-    }
+      test: (txt) => txt.length < 5,
+    },
   });
-  e.domEl.innerText = "test text";
-  assertEqual(e.validators.checkText(), true);
+  assertEqual(e._validators.test("abcdef"), false);
 });
 
-testSuite.addTest("Initialization fails with non-object validators", () => {
+testSuite.addTest("Initialization fails with invalid validators type", () => {
   assertThrows(() => {
     var e = new Entity({
-      validators: "not-an-object",
+      validators: "bad-type",
     });
-  }, "validators property is not an object");
-});
-
-testSuite.addTest("Initialization fails with non-function validators", () => {
-  assertThrows(() => {
-    var e = new Entity({
-      validators: {
-        checkText: "not-a-function",
-      },
-    });
-  }, /validator.+is not a function/);
-});
-
-testSuite.addTest("Initialization fails with arrow function validators", () => {
-  assertThrows(() => {
-    var e = new Entity({
-      domEl: document.createElement("div"),
-      validators: {
-        checkText: () => this.domEl.innerText == "test text",
-      },
-    });
-  }, /validator.+cannot be an arrow function/);
+  }, "validators property is not a function or an object");
 });
 
 // Utils
