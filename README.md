@@ -1,5 +1,5 @@
 # EntUI: a vanilla Javascript UI library (kind of)
-## another product of me learning how to _not_ to make code
+## another product of me learning how _not_ to make code
 In my quest to create a frontend UI library from scratch, I created this "framework" while learning the important principles of state management. The goal was to create something I could use to remake [Fracture](https://github.com/tang0226/fracture), a JS fractal viewer I built with ad-hoc UI interactions. This naive implementation of interactions between components with no authoritative state manager led to serious maintainability / scalability issues. The app works, but adding features is a slog. I wanted a framework that helps organize elements to make it easier to manage interactions between UI components.
 
 ### Framework summary
